@@ -1,2 +1,2 @@
-# srer_rainout_seedlings
-Scripts for Santa Rita Experimental Range rainfall manipulation velvet mesquite establishment experiment
+# SRER Rainfall Manipulation Experiment
+This repo stores and controls scripts for Santa Rita Experimental Range rainfall manipulation velvet mesquite establishment experiment. This work is funded by the US Department of Agriculture National Institute of Food and Agriculture under grant GRANT11886574 (award 2016-67013-24932) titled, "Exotic grass and woody plant encroachment in Southwestern Rangelands: mechanisms of invasion and oppotunities for containment".

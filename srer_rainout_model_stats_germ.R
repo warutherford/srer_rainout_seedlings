@@ -92,9 +92,9 @@ seedlings_obs <- seedlings_all_full %>%
          plotID = as.factor(plotID))
 
 # mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
-hist(seedlings_obs$tot_germination) # not horribly zero inflated, not normal
+hist(seedlings_obs$tot_germination)# not horribly zero inflated, not normal
 hist(log(seedlings_obs$tot_germination)) # still not normal
-hist(sqrt(seedlings_obs$tot_germination)) # still not normal
+hist(sqrt(seedlings_obs$tot_germination)) # still not normal, helps with zero inflation
 
 # count data...poisson and zero-inflated (41% of data are zeros)
 num_obs <- seedlings_obs %>% ungroup() %>% summarise(obs = n())
@@ -115,10 +115,10 @@ zeros <- seedlings_obs %>%
 # Keep same random factors as with survival model
 
 # test if tot_germination sig diff across all blocks?
-zi.block <- glmmTMB(tot_germination ~ block + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.block <- glmmTMB(tot_germination ~ block + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                     data = seedlings_obs,
-                    ziformula = ~.,
-                    family = poisson)
+                    #ziformula = ~.,
+                    family = tweedie)
 zi.block.sum <- summary(zi.block)
 zi.block.sum
 
@@ -126,10 +126,10 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.germ.full <- glmmTMB(tot_germination ~ precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.full <- glmmTMB(tot_germination ~ precip/clip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                              data = seedlings_obs,
-                             ziformula = ~.,
-                             family = poisson)
+                             #ziformula = ~.,
+                             family = tweedie)
 zi.srer.germ.full.sum <- summary(zi.srer.germ.full)
 zi.srer.germ.full.sum
 
@@ -137,35 +137,35 @@ zi.srer.germ.full.sum
 # precipitation, clipping, and exclusion fixed factors
 # model convergence issue with cohort and sample with temp autocorrelation
 # try neg binomial dist instead of poisson
-zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                             data = seedlings_obs,
-                            ziformula = ~.,
-                            family = poisson)
+                            #ziformula = ~.,
+                            family = tweedie)
 zi.srer.germ.pce.sum <- summary(zi.srer.germ.pce)
 zi.srer.germ.pce.sum
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
-zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                            data = seedlings_obs,
-                           ziformula = ~.,
-                           family = poisson)
+                           #ziformula = ~.,
+                           family = tweedie)
 zi.srer.germ.pe.sum <- summary(zi.srer.germ.pe)
 zi.srer.germ.pe.sum
 
 # precipitation only fixed factor
-zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                           data = seedlings_obs,
-                          ziformula = ~.,
-                          family = poisson)
+                          #ziformula = ~.,
+                          family = tweedie)
 zi.srer.germ.p.sum <- summary(zi.srer.germ.p)
 zi.srer.germ.p.sum
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                                data = seedlings_obs,
-                               ziformula = ~.,
-                               family = poisson)
+                               #ziformula = ~.,
+                               family = tweedie)
 zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
 zi.srer.germ.pe.int.sum
 
@@ -183,10 +183,10 @@ aic.compare.final
 anova(zi.srer.germ.pce, zi.srer.germ.pe) # yes
 
 # final PRVE seedlings tot_germination model will precipitation and exclusion as only fixed factors
-zi.srer.germ.final <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.final <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                               data = seedlings_obs,
-                              ziformula = ~.,
-                              family = poisson)
+                              #ziformula = ~.,
+                              family = tweedie)
 zi.srer.germ.final.sum <- summary(zi.srer.germ.final)
 zi.srer.germ.final.sum
 

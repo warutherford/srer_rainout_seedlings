@@ -127,10 +127,10 @@ aic.compare.final <- AICtab(zi.srer.herb.p,
 aic.compare.final
 
 # does removing clipping sig improve model?
-anova(zi.srer.herb.pce, zi.srer.herb.pe) # yes
+anova(zi.srer.herb.pce, zi.srer.herb.pe) # no, keep clipping tx
 
 # final PRVE seedlings tot_herbivory model will precipitation and exclusion as only fixed factors
-zi.srer.herb.final <- glmmTMB(tot_herbivory ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.herb.final <- glmmTMB(tot_herbivory ~ precip + excl + clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                               data = seedlings_obs_herb,
                               family = binomial)
 zi.srer.herb.final.sum <- summary(zi.srer.herb.final)
@@ -143,10 +143,10 @@ best.model.herb <- zi.srer.herb.final
 VarCorr(best.model.herb)
 
 # examine model residuals
-seedlings_obs$res_herb <- residuals(best.model.herb, quantileFunction = qpois)
+seedlings_obs_herb$res_herb <- residuals(best.model.herb, quantileFunction = qpois)
 
 # examine histogram of model residuals
-hist(seedlings_obs$res_herb) # look normal
+hist(seedlings_obs_herb$res_herb) # look normal
 
 # extract model co-variance matrix
 vcov.matrix.herb <- vcov(best.model.herb)
@@ -161,15 +161,15 @@ zi.cov.herb <- as.data.frame(vcov.matrix.herb$zi)
 seedlings.best.simres.herb <- simulateResiduals(best.model.herb, n = 1000, plot = TRUE, integerResponse = TRUE)
 
 # save scaled residuals
-seedlings_obs$sim_herb <- seedlings.best.simres.herb$scaledResiduals
+seedlings_obs_herb$sim_herb <- seedlings.best.simres.herb$scaledResiduals
 
 # save model fitted residuals
-seedlings_obs$sim_fit_herb <- seedlings.best.simres.herb$fittedResiduals
+seedlings_obs_herb$sim_fit_herb <- seedlings.best.simres.herb$fittedResiduals
 
 # look at simulated/model residuals
-hist(seedlings_obs$sim_herb) # pretty level, slight inc at end but makes sense with slight over prediction
+hist(seedlings_obs_herb$sim_herb) # pretty level, slight inc at end but makes sense with slight over prediction
 
-hist(seedlings_obs$sim_fit_herb) # normal residuals
+hist(seedlings_obs_herb$sim_fit_herb) # normal residuals
 
 # are there outliers?
 testOutliers(seedlings.best.simres.herb, type = 'bootstrap') # no outliers
@@ -195,15 +195,15 @@ spread <- function(x) sd(x)
 testGeneric(seedlings.best.simres.herb, summary = spread) # yes, does not sig deviate (p = 0.22)
 
 # take a look at model residuals
-plotResiduals(seedlings.best.simres.herb, seedlings_obs$precip, quantreg = T) # no strange residual patterns
+plotResiduals(seedlings.best.simres.herb, seedlings_obs_herb$precip, quantreg = T) # no strange residual patterns
 
 # save model predicted responses as a new column
-seedlings_obs$pred_herb <- predict(best.model.herb, type = "response")
+seedlings_obs_herb$pred_herb <- predict(best.model.herb, type = "response")
 
 # look histograms of model predicted tot_herbivory and original tot_herbivory data 
-hist(seedlings_obs$pred_herb)
+hist(seedlings_obs_herb$pred_herb)
 
-hist(seedlings_obs$tot_herbivory)
+hist(seedlings_obs_herb$tot_herbivory)
 
 # post-hoc test of within precip treatment differences
 g.precip <- glht(best.model.herb, linfct = mcp(precip = "Tukey", interaction_average = T))
@@ -226,8 +226,8 @@ ranef(best.model.herb)
 
 coef(best.model.herb)
 
-# write seedlings_obs data frame to csv for use/graphing
-write.csv(seedlings_obs, file = "Data/seedlings_obs_herb.csv", row.names = FALSE)
+# write seedlings_obs_herbdata frame to csv for use/graphing
+write.csv(seedlings_obs_herb, file = "Data/seedlings_obs_herb.csv", row.names = FALSE)
 
 # write model outputs to text file
 
@@ -244,4 +244,4 @@ write.csv(seedlings_obs, file = "Data/seedlings_obs_herb.csv", row.names = FALSE
 # post.hoc.letters
 # 
 # sink()
-
+# 

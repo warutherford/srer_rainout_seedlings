@@ -192,7 +192,7 @@ zi.srer.surv.full.sum
 zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                             data = seedlings_obs,
                             ziformula = ~.,
-                            family = nbinom1)
+                            family = poisson)
 zi.srer.surv.pce.sum <- summary(zi.srer.surv.pce)
 zi.srer.surv.pce.sum
 

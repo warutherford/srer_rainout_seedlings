@@ -6,6 +6,7 @@
 
 # Load packages
 library(tidyverse)
+library(vroom)
 library(ggpubr)
 library(glmmTMB)
 
@@ -28,7 +29,6 @@ seedlings_obs <- vroom("Data/seedlings_obs.csv",
 str(seedlings_obs)
 glimpse(seedlings_obs)
 
-
 # create data set for raw survival data
 tot_surv <- seedlings_obs %>% 
   group_by(precip, cohort, date) %>% 
@@ -37,6 +37,24 @@ tot_surv <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv,
          date = as.Date(date))
+
+summary(tot_surv)
+
+tot_surv %>%
+  group_by(precip, cohort) %>% 
+  summarise(mean_precip_per = (100*mean(mean_surv)/10),
+            mean_se_per = (100*mean(se_surv)/10)) %>% 
+  mutate(upper = mean_precip_per + mean_se_per,
+         lower = mean_precip_per - mean_se_per)
+
+tot_surv %>%
+  group_by(precip) %>% 
+  summarise(mean_precip_per = (100*mean(mean_surv)/10),
+            mean_se_per = (100*mean(se_surv)/10)) %>%
+  mutate(upper = mean_precip_per + mean_se_per,
+         lower = mean_precip_per - mean_se_per) %>% 
+  ggplot(mapping = aes(x = precip, y = mean_precip_per, color = precip)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25)
 
 # plot predicted survival over time with error bars
 tot_surv %>% ggplot(aes(x = date, y = mean_surv, group = cohort, color = precip, linetype = cohort)) + 

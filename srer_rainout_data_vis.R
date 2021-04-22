@@ -64,18 +64,28 @@ tot_surv %>%
   theme_pubr(legend = "right")
 
 # plot predicted survival over time with error bars
-tot_surv %>% ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip, linetype = cohort)) + 
+
+labels.precip <- factor(tot_surv$precip, labels = c("Ambient", "Drought", "Wet"))
+
+tot_surv %>% 
+  mutate(precip = recode(precip,
+    "Control" = "Ambient",
+    "RO" = "Drought",
+    "IR" = "Wet")) %>% 
+  ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
   scale_color_manual(values = c("grey30", "red1", "blue1")) +
-  scale_x_date(date_labels = "%b %y", date_breaks = "3 months") +
-  geom_line(stat = "identity", size = 2, position = position_dodge(1)) + 
-  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 1, position = position_dodge(), size = 1) + # if make larger, very busy
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  geom_line(aes(linetype = cohort), stat = "identity", size = 2) + 
+  #geom_errorbar(aes(ymin = 10*lower, ymax = 10*upper), width = 1, size = 5) + # very busy
+  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
-  #scale_y_continuous(labels = c("Ambient", "Drought", "Wet")) +
   labs(y = "Mean Survival (%)",
-       x = "") +
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       linetype = "Cohort") +
   labs_pubr() +
   facet_wrap(~precip, ncol = 1, nrow = 3) +
-  theme_pubr(x.text.angle = 45, legend = "right")
+  theme_pubr(legend = "bottom")
 
 # create data set for precip and excl
 tot_surv_pe <- seedlings_obs %>% 

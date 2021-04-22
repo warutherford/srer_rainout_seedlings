@@ -53,17 +53,29 @@ tot_surv %>%
             mean_se_per = (100*mean(se_surv)/10)) %>%
   mutate(upper = mean_precip_per + mean_se_per,
          lower = mean_precip_per - mean_se_per) %>% 
-  ggplot(mapping = aes(x = precip, y = mean_precip_per, color = precip)) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25)
+  ggplot(mapping = aes(x = precip, y = mean_precip_per, fill = precip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
+  labs(y = "Mean Survival (%)",
+       x = "Precipitation Treatment") +
+  labs_pubr() +
+  theme_pubr(legend = "right")
 
 # plot predicted survival over time with error bars
-tot_surv %>% ggplot(aes(x = date, y = mean_surv, group = cohort, color = precip, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30","blue1", "red1")) +
+tot_surv %>% ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "red1", "blue1")) +
   scale_x_date(date_labels = "%b %y", date_breaks = "3 months") +
-  geom_line(size = 0.5) + 
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1) + # if make larger, very busy
-  facet_wrap(~precip) +
-  theme_pubr(x.text.angle = 45)
+  geom_line(stat = "identity", size = 2, position = position_dodge(1)) + 
+  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 1, position = position_dodge(), size = 1) + # if make larger, very busy
+  scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  #scale_y_continuous(labels = c("Ambient", "Drought", "Wet")) +
+  labs(y = "Mean Survival (%)",
+       x = "") +
+  labs_pubr() +
+  facet_wrap(~precip, ncol = 1, nrow = 3) +
+  theme_pubr(x.text.angle = 45, legend = "right")
 
 # create data set for precip and excl
 tot_surv_pe <- seedlings_obs %>% 

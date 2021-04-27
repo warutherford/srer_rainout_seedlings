@@ -6,6 +6,7 @@
 
 # Load packages
 library(tidyverse)
+library(forcats)
 library(vroom)
 library(ggpubr)
 library(glmmTMB)
@@ -56,14 +57,14 @@ tot_surv %>%
   ggplot(mapping = aes(x = precip, y = mean_precip_per, fill = precip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  scale_fill_manual(values = c("grey30","red1", "blue1")) +
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   labs(y = "Mean Survival (%)",
        x = "Precipitation Treatment") +
   labs_pubr() +
   theme_pubr(legend = "right")
 
-# plot predicted survival over time with error bars
+# plot survival over time with error bars
 
 labels.precip <- factor(tot_surv$precip, labels = c("Ambient", "Drought", "Wet"))
 
@@ -75,17 +76,17 @@ tot_surv %>%
   ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
   scale_color_manual(values = c("grey30", "red1", "blue1")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
-  geom_line(aes(linetype = cohort), stat = "identity", size = 2) + 
-  #geom_errorbar(aes(ymin = 10*lower, ymax = 10*upper), width = 1, size = 5) + # very busy
+  geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  ylim(0,100) +
   labs(y = "Mean Survival (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
        linetype = "Cohort") +
   labs_pubr() +
-  facet_wrap(~precip, ncol = 1, nrow = 3) +
-  theme_pubr(legend = "bottom")
+  facet_wrap(~precip, ncol = 3, nrow = 1) +
+  theme_pubr(legend = "bottom", x.text.angle = 45)
 
 # create data set for precip and excl
 tot_surv_pe <- seedlings_obs %>% 
@@ -95,7 +96,8 @@ tot_surv_pe <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
-test <- seedlings_obs %>% 
+# if want to look at effects treating precip as continuous
+precip_cont_df <- seedlings_obs %>% 
   ungroup() %>% 
   mutate(precip_cont = dplyr::recode(precip,
                                      "Control" = "100",
@@ -103,12 +105,14 @@ test <- seedlings_obs %>%
                                      "RO" = "35")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-test %>%
+# clip vs unclip across exclusion treatments
+precip_cont_df %>%
   ggplot(aes(x = precip_cont, y = survival, color = clip, group = clip)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))+
   facet_wrap(~excl)
 
-test %>% 
+# only exclusion txs
+precip_cont_df %>% 
   ggplot(aes(x = precip_cont, y = survival, color = excl, group = excl)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))
 
@@ -118,47 +122,78 @@ test %>% filter(cohort == "2") %>%
   geom_histogram(aes(x = survival))+
   facet_wrap(~excl)
 
-# plot control raw survival values for cohort 1
-surv_1 <- seedlings_obs %>%
-  filter(cohort == '1'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_1 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_1 + se_surv,
-         lower = mean_surv_1 - se_surv)
+### Herbivory visualization
+seedlings <- vroom("Data/seedlings_combined.csv",
+                   col_select = -c(1),
+                   col_types = c(.default = "f",
+                                 date = "D"))
+str(seedlings)
 
-surv_1 %>% 
-  ggplot(aes(x = date, y = mean_surv_1)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()
+# Herbivory counts
+seedlings_herb_full <- seedlings %>% 
+  group_by(block, precip, clip, excl, side, rep, date, cohort) %>%
+  count(herbivory) %>% 
+  pivot_wider(names_from = herbivory,
+              values_from = n,
+              values_fill = 0) %>% 
+  rename(no_herb = "0",
+         herb_lived = "1",
+         herb_died = "2") %>% 
+  mutate(tot_herbivory = herb_lived + herb_died)
 
-# plot control raw survival values for cohort 2
-surv_2 <- seedlings_obs %>%
-  filter(cohort == '2'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_2 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_2 + se_surv,
-         lower = mean_surv_2 - se_surv)
+glimpse(seedlings_herb_full)
+summary(seedlings_herb_full)
 
-surv_2 %>% 
-  ggplot(aes(x = date, y = mean_surv_2)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()
+# descriptive stats for each cohort 1-3
+describeBy(seedlings_herb_full, group = "cohort")
 
-# plot control predicted survival values for cohort 3
-surv_3 <- seedlings_obs %>%
-  filter(cohort == '3'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_3 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_3 + se_surv,
-         lower = mean_surv_3 - se_surv)
+# make a new ID column for each observation and plot
+seedlings_obs_herb <- seedlings_herb_full %>% 
+  mutate(block = as.character(block),
+         precip = as.character(precip)) %>% 
+  unite("sampID", block:rep, sep = "_", remove = FALSE) %>%
+  unite("plotID", block:precip, sep = "_", remove = FALSE) %>% 
+  mutate(block = as.factor(block),
+         precip = as.factor(precip),
+         date = as.factor(date),
+         sampID = as.factor(sampID),
+         plotID = as.factor(plotID))
 
-surv_3 %>% 
-  ggplot(aes(x = date, y = mean_surv_3)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()
+seedlings_obs_herb %>% 
+  mutate(date = as.Date(date)) %>% 
+  #select(c(precip, clip, excl, cohort, date, tot_herbivory)) %>% 
+  ggplot(aes(x = date, y=herb_died,group = cohort, color = precip)) +
+  geom_point(size=2, alpha=0.4) +
+  geom_smooth(method="loess", colour="blue", size=1.5) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  ylim(0,1)+
+  xlab("Date") +
+  ylab("Tot_herb") +
+  facet_wrap(~precip + excl, scales = "free_y") +
+  theme_pubr(legend = "bottom", x.text.angle = 45)
+
+# use summary data
+seedlings_obs %>%
+  group_by(precip, clip, excl, cohort, date) %>% 
+  mutate(precip = recode_factor(precip,
+                         "Control" = "Ambient",
+                         "RO" = "Drought",
+                         "IR" = "Wet")) %>%
+  ggplot(aes(x = date, y = 100*(tot_herbivory/10), group = cohort, color = precip, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "red1", "blue1")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  #geom_point() +
+  stat_smooth(method = "loess") +
+  #geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
+  #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  #scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  #ylim(0, 20) +
+  labs(y = "Total Herbivory (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       points = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip + excl, scales = "free_y") +
+  theme_pubr(legend = "bottom", x.text.angle = 45)
+

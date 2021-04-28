@@ -10,6 +10,7 @@ library(forcats)
 library(vroom)
 library(ggpubr)
 library(glmmTMB)
+library(dplyr)
 
 ### Read in clean seedlings data with model outputs from "srer_rainout_stats_summarize"
 seedlings_obs <- vroom("Data/seedlings_obs.csv",
@@ -159,19 +160,21 @@ seedlings_obs_herb <- seedlings_herb_full %>%
          sampID = as.factor(sampID),
          plotID = as.factor(plotID))
 
-seedlings_obs_herb %>% 
+died_herb <- seedlings_obs_herb %>% 
+  group_by(precip, clip, excl, cohort, date) %>% 
   mutate(date = as.Date(date)) %>% 
-  #select(c(precip, clip, excl, cohort, date, tot_herbivory)) %>% 
-  ggplot(aes(x = date, y=herb_died,group = cohort, color = precip)) +
+  ggplot(aes(x = date, y = herb_died, group = precip, color = precip)) +
   geom_point(size=2, alpha=0.4) +
-  geom_smooth(method="loess", colour="blue", size=1.5) +
+  geom_smooth(method="loess", colour="blue", size=1.5, se = FALSE) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   scale_color_manual(values = c("grey30", "blue1", "red1")) +
   ylim(0,1)+
   xlab("Date") +
-  ylab("Tot_herb") +
-  facet_wrap(~precip + excl, scales = "free_y") +
+  ylab("Died from Herbivory") +
+  facet_wrap(~precip, ncol = 3, scales = "free_y") +
   theme_pubr(legend = "bottom", x.text.angle = 45)
+
+died_herb
 
 # use summary data
 seedlings_obs %>%
@@ -180,7 +183,7 @@ seedlings_obs %>%
                          "Control" = "Ambient",
                          "RO" = "Drought",
                          "IR" = "Wet")) %>%
-  ggplot(aes(x = date, y = 100*(tot_herbivory/10), group = cohort, color = precip, linetype = cohort)) + 
+  ggplot(aes(x = date, y = 100*(herb_died/10), group = cohort, color = precip, linetype = cohort)) + 
   scale_color_manual(values = c("grey30", "red1", "blue1")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   #geom_point() +
@@ -189,11 +192,59 @@ seedlings_obs %>%
   #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   #scale_fill_manual(values = c("grey30","blue1", "red1")) +
   #ylim(0, 20) +
-  labs(y = "Total Herbivory (%)",
+  labs(y = "Died from Herbivory (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
        points = "Cohort") +
   labs_pubr() +
-  facet_wrap(~precip + excl, scales = "free_y") +
+  facet_wrap(~precip + clip, ncol = 2, scales = "free_y") +
   theme_pubr(legend = "bottom", x.text.angle = 45)
 
+herb_summary <- seedlings_obs %>%
+  group_by(precip, clip, excl, cohort) %>%
+  summarise(died_sum = 100*(mean(herb_died)/10),
+         live_sum = 100*(mean(herb_lived)/10),
+         tot_sum = 100*(mean(tot_herbivory)/10))
+
+herb_summary %>%
+  group_by(precip, clip, excl, cohort) %>% 
+  ggplot(mapping = aes(x = precip, y = died_sum, fill = precip)) +
+  stat_summary(fun = mean, geom = "bar")+
+  facet_wrap(~clip + excl)
+  
+  geom_bar(stat="identity", color = "black", position = position_dodge()) +
+  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30","red1", "blue1")) +
+  scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
+  labs(y = "Mean Died Herb (%)",
+       x = "Precipitation Treatment") +
+  labs_pubr() +
+  facet_wrap(~excl) +
+  theme_pubr(legend = "right")
+
+# use change from previous measurement?
+# not sure if this is working
+change <- seedlings_obs_herb %>% 
+  group_by(precip, clip, excl, date, cohort) %>% 
+  mutate(date = as.Date(date)) %>% 
+  arrange(desc(date), .by_group = TRUE) %>% 
+  mutate(herb_lag = dplyr::lag(herb_died, n = 1, default = NA, order_by = date))%>%
+  mutate(pct_herb_change = (100*(herb_died - herb_lag)/herb_lag))
+
+hist(change$herb_lag)
+
+
+change %>% 
+  group_by(precip, clip, excl, cohort, date) %>% 
+  ggplot(aes(x = date, y = herb_lag, color = precip, group = cohort, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "red1", "blue1")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  stat_smooth(method = "loess") +
+  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  labs(y = "Total Herbivory Change (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       points = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip + clip + excl) +
+  theme_pubr(legend = "bottom", x.text.angle = 45)

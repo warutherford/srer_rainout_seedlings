@@ -1,13 +1,16 @@
 # USDA Rainout - Santa Rita Experimental Range
-# Data visualizations
+# Data visualizations-main
 # Austin Rutherford
 # email:arutherford@email.arizona.edu
 # 2021-03-29
 
 # Load packages
 library(tidyverse)
+library(forcats)
+library(vroom)
 library(ggpubr)
 library(glmmTMB)
+library(dplyr)
 
 ### Read in clean seedlings data with model outputs from "srer_rainout_stats_summarize"
 seedlings_obs <- vroom("Data/seedlings_obs.csv",
@@ -28,7 +31,6 @@ seedlings_obs <- vroom("Data/seedlings_obs.csv",
 str(seedlings_obs)
 glimpse(seedlings_obs)
 
-
 # create data set for raw survival data
 tot_surv <- seedlings_obs %>% 
   group_by(precip, cohort, date) %>% 
@@ -38,14 +40,75 @@ tot_surv <- seedlings_obs %>%
          lower = mean_surv - se_surv,
          date = as.Date(date))
 
-# plot predicted survival over time with error bars
-tot_surv %>% ggplot(aes(x = date, y = mean_surv, group = cohort, color = precip, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30","blue1", "red1")) +
-  scale_x_date(date_labels = "%b %y", date_breaks = "3 months") +
-  geom_line(size = 0.5) + 
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1) + # if make larger, very busy
-  facet_wrap(~precip) +
-  theme_pubr(x.text.angle = 45)
+summary(tot_surv)
+
+tot_surv %>%
+  group_by(precip, cohort) %>% 
+  summarise(mean_precip_per = (100*mean(mean_surv)/10),
+            mean_se_per = (100*mean(se_surv)/10)) %>% 
+  mutate(upper = mean_precip_per + mean_se_per,
+         lower = mean_precip_per - mean_se_per)
+
+bar_surv_fig <- tot_surv %>%
+  group_by(precip) %>% 
+  summarise(mean_precip_per = (100*mean(mean_surv)/10),
+            mean_se_per = (100*mean(se_surv)/10)) %>%
+  mutate(upper = mean_precip_per + mean_se_per,
+         lower = mean_precip_per - mean_se_per) %>%
+  mutate(precip = recode_factor(precip,
+                                       "IR" = "Wet",
+                                      "Control" = "Ambient",
+                                       "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(mapping = aes(x = precip, y = mean_precip_per, fill = precip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("blue1","grey30","red1")) +
+  scale_x_discrete(labels = c("Wet","Ambient", "Drought")) +
+  labs(y = "Mean Survival (%)",
+       x = "Precipitation Treatment") +
+  labs_pubr() +
+  theme_pubr(legend = "none")
+
+ggsave(filename = "Figures_Tables/bar_mean_surv.tiff",
+       plot = bar_surv_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
+# plot survival over time with error bars
+
+#labels.precip <- factor(tot_surv$precip, labels = c("Ambient", "Drought", "Wet"))
+
+line_mean_surv <- tot_surv %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
+  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
+  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  ylim(0,100) +
+  labs(y = "Mean Survival (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       linetype = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip, ncol = 3, nrow = 1) +
+  theme_pubr(legend = "bottom", x.text.angle = 45)
+
+ggsave(filename = "Figures_Tables/line_mean_surv.tiff",
+       plot = line_mean_surv,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 # create data set for precip and excl
 tot_surv_pe <- seedlings_obs %>% 
@@ -55,7 +118,8 @@ tot_surv_pe <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
-test <- seedlings_obs %>% 
+# if want to look at effects treating precip as continuous
+precip_cont_df <- seedlings_obs %>% 
   ungroup() %>% 
   mutate(precip_cont = dplyr::recode(precip,
                                      "Control" = "100",
@@ -63,62 +127,25 @@ test <- seedlings_obs %>%
                                      "RO" = "35")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-test %>%
-  ggplot(aes(x = precip_cont, y = survival, color = clip, group = clip)) + 
+# clip vs unclip across exclusion treatments
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
+  ggplot(aes(x = precip_cont, y = mean_surv, color = clip, group = clip)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))+
-  facet_wrap(~excl)
+  labs(y = "Mean Survival (%)",
+       x = "PPT (mm)",
+       color = "Grazing") +
+  labs_pubr() +
+  facet_wrap(~excl, nrow = 1)
 
-test %>% 
+# only exclusion txs
+precip_cont_df %>% 
   ggplot(aes(x = precip_cont, y = survival, color = excl, group = excl)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))
 
 # year 2 zeros in total exclusion tx really bring down the averages
-test %>% filter(cohort == "2") %>% 
+test %>% dplyr::filter(cohort == "2") %>% 
   ggplot()+
   geom_histogram(aes(x = survival))+
   facet_wrap(~excl)
-
-# plot control raw survival values for cohort 1
-surv_1 <- seedlings_obs %>%
-  filter(cohort == '1'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_1 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_1 + se_surv,
-         lower = mean_surv_1 - se_surv)
-
-surv_1 %>% 
-  ggplot(aes(x = date, y = mean_surv_1)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()
-
-# plot control raw survival values for cohort 2
-surv_2 <- seedlings_obs %>%
-  filter(cohort == '2'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_2 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_2 + se_surv,
-         lower = mean_surv_2 - se_surv)
-
-surv_2 %>% 
-  ggplot(aes(x = date, y = mean_surv_2)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()
-
-# plot control predicted survival values for cohort 3
-surv_3 <- seedlings_obs %>%
-  filter(cohort == '3'& precip == 'Control') %>%
-  group_by(date) %>% 
-  summarise(mean_surv_3 = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
-  mutate(upper = mean_surv_3 + se_surv,
-         lower = mean_surv_3 - se_surv)
-
-surv_3 %>% 
-  ggplot(aes(x = date, y = mean_surv_3)) +
-  geom_line(group = 1, color = "grey30")+
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 1)+
-  theme_pubr()

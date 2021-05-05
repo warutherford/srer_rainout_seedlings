@@ -26,6 +26,7 @@ seedlings_1_clean <- seedlings_1 %>%
   mutate(date = lubridate::as_date(date, format = '%Y-%m-%d'),
          # recode recruit values to fix data entry typos and make the dead
          # seedlings to be coded as "2" (recruited = 1, no germination = 0)
+         # X in HerbX means seedling had herbivory occur and then died
          recruit = recode(recruit,
                           "1-herbX" = "1-HerbX",
                           "1-Herbx" = "1-HerbX",

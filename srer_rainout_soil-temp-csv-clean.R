@@ -33,9 +33,9 @@ read_and_label <- function(x,...){
 
 # reads columns 2 and 3 (timestamp and temperature) into a list of data.table
 all_data <- 
-  lapply(fns, function(x,...) {try(read_and_label(x,...))},
-         select=1:2, header=TRUE, skip=0
-  ) 
+  lapply(fns, function(x,...) {read_and_label(x,...)},
+          header = TRUE, skip=0
+  )
 
 ## PROCESS RAW DATA ---------
 # drop errors, merge into one large data.table, make table a data frame, name columns

@@ -44,29 +44,50 @@ all_data <- rbindlist(all_data, fill = TRUE, use.names = TRUE, idcol = TRUE)
 all_data <- as.data.frame(all_data)
 
 colnames(all_data)
-setnames(all_data, c("setID","datetime","soiltempC", "ids"))
+setnames(all_data, c("setID","datetime","soiltempC", "ids", "lux"))
 
 # transform to long format, force date format, make column for treatments, make treatments factors
-comb_data <- all_data %>% 
+comb_data_amb <- all_data %>% 
   mutate(datetime = ymd_hms(datetime)) %>% 
   separate("ids", c("precip","location", "side"), sep = "-", remove = TRUE, fill = "warn") %>%
-  separate("side", c("section", "extra"), sep = "_", fill = "right") %>% 
+  separate("side", c("section", "extra", "extraX"), sep = "_", fill = "right") %>% # 'extra' and 'extraX' are dummy columns from the file names
   mutate(precip = as.factor(precip),
          clip = as.factor(section),
          location = as.factor(location)) %>% 
   mutate(precip = recode_factor(precip,
-                         "CO" = "Ambient"),
-                         #"RO" = "Drought",
-                         #"IR" = "Wet"),
-         clip = recode_factor(section, 
+                         "CO" = "Ambient",
+                         "RO" = "Drought",
+                         "IR" = "Wet")) %>% 
+  filter(precip == "Ambient", .preserve = TRUE) %>% 
+  mutate(clip = recode_factor(section, 
                        "E1" = "Clipped",
                        "E2" = "Clipped",
                        "W1" = "Unclipped",
                        "W2" = "Unclipped")) %>% 
-  dplyr::select(-extra)
+  dplyr::select(-c(extra, extraX)) # remove dummy columns from file names
+
+comb_data_d_w <- all_data %>% 
+  mutate(datetime = ymd_hms(datetime)) %>% 
+  separate("ids", c("precip","location", "side"), sep = "-", remove = TRUE, fill = "warn") %>%
+  separate("side", c("section", "extra", "extraX"), sep = "_", fill = "right") %>% # 'extra' and 'extraX' are dummy columns from the file names
+  mutate(precip = as.factor(precip),
+         clip = as.factor(section),
+         location = as.factor(location)) %>% 
+  mutate(precip = recode_factor(precip,
+                                "CO" = "Ambient",
+                                "RO" = "Drought",
+                                "IR" = "Wet")) %>% 
+  filter(precip == "Drought" | precip == "Wet") %>% 
+  mutate(clip = recode_factor(section, 
+                              "E1" = "Unclipped",
+                              "E2" = "Unclipped",
+                              "W1" = "Clipped",
+                              "W2" = "Clipped")) %>% 
+  dplyr::select(-c(extra, extraX)) # remove dummy columns from file names
   
+comb_data  <- full_join(comb_data_amb, comb_data_d_w)
 
 ## SAVE PROCESSED DATA ------
 # write data in one big file
-write.csv(comb_data, paste(out_dir, "all_soil_temp.csv", sep="/"), 
+write.csv(comb_data, paste(out_dir, "all_soil_temp_light.csv", sep="/"), 
           row.names=FALSE)

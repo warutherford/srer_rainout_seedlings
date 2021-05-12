@@ -222,7 +222,7 @@ zi.srer.surv.pe.int.sum <- summary(zi.srer.surv.pe.int)
 zi.srer.surv.pe.int.sum
 
 # compare AIC scores of all potential models for model selection
-aic.compare.final <- AICtab(zi.srer.surv.p,
+aic.compare.final <- AICctab(zi.srer.surv.p,
                             zi.srer.surv.pe,
                             zi.srer.surv.pce,
                             zi.srer.surv.full,

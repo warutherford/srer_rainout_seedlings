@@ -113,7 +113,7 @@ zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
 zi.srer.germ.pe.int.sum
 
 # compare AIC scores of all potential models for model selection
-aic.compare.final <- AICtab(zi.srer.germ.p,
+aic.compare.final <- AICctab(zi.srer.germ.p,
                             zi.srer.germ.pe,
                             zi.srer.germ.pce,
                             zi.srer.germ.full,

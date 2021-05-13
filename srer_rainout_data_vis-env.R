@@ -65,27 +65,27 @@ ppt_parse <- ppt_temp_series %>%
   summarise(ppt_measure = max(pptmm)) %>% 
   arrange(site , year, month, week, day)
 
-test_diff <- test %>%
+ppt_lag <- ppt_parse %>%
   filter(ppt_measure != 0) %>% 
   group_by(site) %>% 
   mutate(ppt_diff = (ppt_measure - dplyr::lag(ppt_measure, default = 0))) %>% 
   mutate(ppt_diff = replace(ppt_diff, ppt_diff < 0, NA))
   
-test_filt <- test_diff %>%   
+ppt_filt <- ppt_lag %>%   
   filter(is.na(ppt_diff)) %>% 
   mutate(ppt_diff = ppt_measure)
 
-test_zero <- test %>% 
+ppt_zero <- ppt_parse %>% 
   filter(ppt_measure == 0)
 
-test_comp <- rbind(test_diff, test_zero, test_filt)
+ppt_comp <- rbind(ppt_lag, ppt_zero, ppt_filt)
   
   
-test_comp_all <- test_comp %>% 
+ppt_comp_all <- ppt_comp %>% 
   mutate(ppt_diff = replace(ppt_diff, is.na(ppt_diff), 0)) %>% 
   arrange(site, year, month, week, day)
 
-test_avg <- test_comp_all %>% 
+ppt_summary <- ppt_comp_all %>% 
   group_by(day, week, month, year) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
   mutate(ppt_in = ppt/100,
@@ -94,7 +94,7 @@ test_avg <- test_comp_all %>%
   filter(id != 1) %>% 
   dplyr::select(-id)
   
-test_begin <-  test_comp_all %>% 
+ppt_start <-  ppt_comp_all %>% 
   group_by(day, week, month, year) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
   mutate(ppt_in = ppt/100,
@@ -106,12 +106,12 @@ test_begin <-  test_comp_all %>%
          ppt_mm = 0) %>% 
   dplyr::select(-id)
 
-test_final <- full_join(test_avg, test_begin) %>% 
+ppt_final <- full_join(ppt_summary, ppt_start) %>% 
   arrange(year, month, week, day)
 
 my_colors <- RColorBrewer::brewer.pal(3, "Blues")[0:3]
 
-test_final %>% 
+ppt_final %>% 
   group_by(week, year) %>% 
   ggplot(aes(x = week, y = ppt_mm, fill = year)) +
   geom_col() +

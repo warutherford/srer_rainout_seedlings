@@ -54,7 +54,7 @@ ppt_temp_series <- ppt_temp %>%
 glimpse(ppt_temp_series)
 summary(ppt_temp_series)
 
-test <- ppt_temp_series %>%
+ppt_parse <- ppt_temp_series %>%
   distinct(datetime, .keep_all = TRUE) %>% 
   mutate(day = as.factor(yday(datetime)),
          week = week(datetime),

@@ -109,26 +109,28 @@ ppt_start <-  ppt_comp_all %>%
 ppt_final <- full_join(ppt_summary, ppt_start) %>% 
   arrange(year, month, week, day)
 
-my_colors <- RColorBrewer::brewer.pal(3, "Blues")[0:3]
-
-ppt_final %>% 
+# PPT figure all years
+ppt_all_fig <- ppt_final %>% 
   group_by(week, year) %>% 
   ggplot(aes(x = week, y = ppt_mm, fill = year)) +
   geom_col() +
-  geom_hline(yintercept = 34.25) +
+  #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
   #xlim(0,52)+
-  labs(y = "Weekly Precipitation (mm)",
+  labs(y = "Precipitation (mm)",
        x = "Week",
        fill = "Year") +
   labs_pubr() +
   facet_wrap(~year, scales = "free_x") +
   theme_pubr(legend = "bottom", margin = TRUE)
 
-describeBy(x = test_avg, group = c("year", "month"))
+ppt_all_fig
 
-sum_2017_monsoon <- test_avg %>% 
+# SRER DESGR Summary Stats
+describeBy(x = ppt_summary, group = c("year", "month"))
+
+sum_2017_monsoon <- ppt_summary %>% 
   group_by(day, year) %>% 
   filter(as.integer(day) >= 166 & as.integer(day) <= 273) %>% 
   summarize(ppt_mm_sum = sum(ppt_mm),
@@ -138,7 +140,7 @@ sum_2017_monsoon <- test_avg %>%
   summarize(tot_mm = sum(ppt_mm_sum),
             tot_in = sum(ppt_in_sum))
 
-sum_2018_monsoon <- test_avg %>% 
+sum_2018_monsoon <- ppt_summary %>% 
   group_by(day, year) %>% 
   filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
   summarize(ppt_mm_sum = sum(ppt_mm),
@@ -148,7 +150,7 @@ sum_2018_monsoon <- test_avg %>%
   summarize(tot_mm = sum(ppt_mm_sum),
             tot_in = sum(ppt_in_sum))
 
-sum_2019_monsoon <- test_avg %>% 
+sum_2019_monsoon <- ppt_summary %>% 
   group_by(day, year) %>% 
   filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
   summarize(ppt_mm_sum = sum(ppt_mm),
@@ -160,10 +162,100 @@ sum_2019_monsoon <- test_avg %>%
 
 monsoon_tot <- rbind(sum_2017_monsoon, sum_2018_monsoon, sum_2019_monsoon)
 
+# Sig difference between precipitation b/w years?
+hist(sqrt((log10(ppt_summary$ppt_mm))))
+lm(sqrt(log10(ppt_mm))~year, data = ppt_summary)
+summary(lm(sqrt(log10(ppt_mm))~year, data = ppt_summary)) # No
 
-hist(sqrt((log10(test_avg$ppt_mm))))
-lm(sqrt(log10(ppt_mm))~year, data = test_avg)
-summary(lm(sqrt(log10(ppt_mm))~year, data = test_avg))
+
+### SRER DESGR Air Temp
+temp <- vroom("Data/site-env-data/ppt-temp/all_air_ppt_temp.csv",
+                  col_types = c(.default = "d",
+                                datetime = "T",
+                                pptmm = "n",
+                                tempC = "n",
+                                ids = "f"))
+str(temp)
+
+temp_series <- temp %>% 
+  dplyr::select(-pptmm) %>% 
+  filter(datetime >= ymd_hms('2017-01-01 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  distinct(datetime, .keep_all = TRUE) %>% 
+  tidyr::extract("ids", into = c("site"), "(.{4})", remove = TRUE) %>% 
+  mutate(site = as.factor(site))
+
+glimpse(temp_series)
+summary(temp_series)
+
+temp_parse <- temp_series %>%
+  drop_na(tempC) %>% 
+  distinct(datetime, .keep_all = TRUE) %>% 
+  mutate(day = as.factor(yday(datetime)),
+         week = week(datetime),
+         month = as.factor(month(datetime)),
+         year = as.factor(year(datetime))) %>%
+  filter(year != 2020) %>% 
+  group_by(site, day, week, month, year) %>% 
+  arrange(site, year, month, week, day)
+
+temp_summary <- temp_parse %>% 
+  group_by(day, week, month, year) %>% 
+  summarise(site_temp = mean(tempC)) %>% 
+  arrange(year, month, week, day)
+
+temp_all_fig <- temp_summary %>% 
+  group_by(week, year) %>% 
+  ggplot(aes(x = week, y = site_temp, color = year)) +
+  geom_smooth(span = 0.07, se = FALSE) +
+  #geom_line(size = 1) +
+  scale_color_manual(values = c("#FF3300", "#FF3300", "#FF3300")) +
+  scale_x_continuous(breaks=seq(0, 52, 4)) +
+  labs(y = "Temperature (°C)",
+       x = "Week",
+       color = "Year") +
+  labs_pubr() +
+  facet_wrap(~year, scales = "free_x") +
+  theme_pubr(legend = "bottom", margin = TRUE)
+
+temp_all_fig
+
+### Combo SRER DESGR PPT and Temp
+
+site_env_all_fig <- ppt_final %>% 
+  group_by(week, year) %>% 
+  ggplot(aes(x = week)) +
+  geom_col(aes(y = ppt_mm, fill = year)) +
+  #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
+  geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
+              size = 1.5, 
+              span = 0.07,
+              se = FALSE,
+              data = temp_summary) +
+  scale_color_discrete(guide = guide_legend(label = FALSE)) +
+  scale_fill_manual(values = c("#0033FF", "#0099FF", "#0066FF")) +
+  scale_x_continuous(breaks = seq(1, 52, 3),
+                     expand = c(0,0)) +
+  scale_y_continuous(name = "Precipitation (mm)",
+                     breaks = seq(0, 130, 10),
+                     sec.axis = sec_axis(~.,
+                                         name = "Mean Temperature (°C)",
+                                         breaks = seq(0, 40, 10)),
+                     expand = c(0.01,0)) +
+  labs(x = "Week",
+       fill = "Precipitation",
+       color = "Temperature") +
+  labs_pubr() +
+  facet_wrap(~year) +
+  theme_pubr(legend = "bottom", margin = TRUE) +
+  theme(axis.title.y = element_text(hjust = 0.4,
+                                    vjust = 1),
+        axis.title.y.right = element_text(hjust = 0.9,
+                                          vjust = 1,
+                                          size = 12))
+  
+
+site_env_all_fig
+
 
 ### soil temp
 

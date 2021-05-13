@@ -13,10 +13,28 @@ library(forcats)
 library(vroom)
 library(ggpubr)
 library(glmmTMB)
-library(hydroTSM)
 library(dplyr)
+library(psych)
 
-### Station PPT and Air Temp
+### Santa Rita Desert Grassland Station Rain Can/DESGR
+ppt_srer <- vroom("Data/site-env-data/precip_srer_DESGR.csv",
+                  col_types = c(.default = "n",
+                                STATION = "c"))
+
+glimpse(ppt_srer)
+
+ppt_srer_avg <- ppt_srer %>%
+  group_by(YEAR) %>% 
+  rowwise() %>% 
+  summarise(ppt_mean = mean(c_across(JAN:DEC), na.rm = TRUE)) %>% 
+  mutate(ppt_yr_in = ppt_mean/100) %>% 
+  mutate(ppt_yr_mm = ppt_yr_in*25.4) %>% 
+  ungroup()
+
+summary(ppt_srer_avg)
+
+
+### Rainout Station PPT and Air Temp
 ppt_temp <- vroom("Data/site-env-data/ppt-temp/all_air_ppt_temp.csv",
                     col_types = c(.default = "d",
                                   datetime = "T",
@@ -27,9 +45,9 @@ str(ppt_temp)
 
 
 ppt_temp_series <- ppt_temp %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2017-01-01 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
-  extract("ids", into = c("site"), "(.{4})", remove = TRUE) %>% 
+  tidyr::extract("ids", into = c("site"), "(.{4})", remove = TRUE) %>% 
   mutate(site = as.factor(site),
          pptmm = replace(pptmm, is.na(pptmm), 0))
 
@@ -39,43 +57,113 @@ summary(ppt_temp_series)
 test <- ppt_temp_series %>%
   distinct(datetime, .keep_all = TRUE) %>% 
   mutate(day = as.factor(yday(datetime)),
+         week = week(datetime),
          month = as.factor(month(datetime)),
          year = as.factor(year(datetime))) %>%
-  group_by(site, day, year) %>% 
+  filter(year != 2020) %>% 
+  group_by(site, day, week, month, year) %>% 
   summarise(ppt_measure = max(pptmm)) %>% 
-  arrange(site , year, day)
+  arrange(site , year, month, week, day)
 
 test_diff <- test %>%
   filter(ppt_measure != 0) %>% 
   group_by(site) %>% 
-  mutate(ppt_diff = (ppt_measure - dplyr::lag(ppt_measure, default = last(ppt_measure)))) %>% 
-  mutate(ppt_diff = replace(ppt_diff, ppt_diff < 0, 0))
+  mutate(ppt_diff = (ppt_measure - dplyr::lag(ppt_measure, default = 0))) %>% 
+  mutate(ppt_diff = replace(ppt_diff, ppt_diff < 0, NA))
+  
+test_filt <- test_diff %>%   
+  filter(is.na(ppt_diff)) %>% 
+  mutate(ppt_diff = ppt_measure)
 
 test_zero <- test %>% 
   filter(ppt_measure == 0)
 
-test_comp <- rbind(test_diff, test_zero)
+test_comp <- rbind(test_diff, test_zero, test_filt)
   
   
-test_comp_all <- test_comp %>% mutate(ppt_diff = replace(ppt_diff, is.na(ppt_diff), 0)) %>% 
-  arrange(site, year, day)
-
-summary(test_diff)
+test_comp_all <- test_comp %>% 
+  mutate(ppt_diff = replace(ppt_diff, is.na(ppt_diff), 0)) %>% 
+  arrange(site, year, month, week, day)
 
 test_avg <- test_comp_all %>% 
-  group_by(day, year) %>% 
-  summarise(ppt_mean = mean(ppt_diff))
+  group_by(day, week, month, year) %>% 
+  summarise(ppt = mean(ppt_diff)) %>% 
+  mutate(ppt_in = ppt/100,
+         ppt_mm = ppt*0.254) %>% 
+  rowid_to_column('id') %>% 
+  filter(id != 1) %>% 
+  dplyr::select(-id)
   
+test_begin <-  test_comp_all %>% 
+  group_by(day, week, month, year) %>% 
+  summarise(ppt = mean(ppt_diff)) %>% 
+  mutate(ppt_in = ppt/100,
+         ppt_mm = ppt*0.254) %>%
+  rowid_to_column("id") %>% 
+  filter(id == 1) %>% 
+  mutate(ppt = 0,
+         ppt_in = 0,
+         ppt_mm = 0) %>% 
+  dplyr::select(-id)
 
-summary(test_avg)
-glimpse(test_avg)
+test_final <- full_join(test_avg, test_begin) %>% 
+  arrange(year, month, week, day)
 
-test_avg %>% 
-  filter(year != '2020') %>% 
-  #group_by(day, week, month, year) %>% 
-ggplot(aes(x = day, y = ppt_mean, color = year)) +
-  geom_bar(stat = "identity") +
-  facet_wrap(~year, ncol = 3)
+my_colors <- RColorBrewer::brewer.pal(3, "Blues")[0:3]
+
+test_final %>% 
+  group_by(week, year) %>% 
+  ggplot(aes(x = week, y = ppt_mm, fill = year)) +
+  geom_col() +
+  geom_hline(yintercept = 34.25) +
+  scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
+  scale_x_continuous(breaks=seq(0, 52, 4)) +
+  #xlim(0,52)+
+  labs(y = "Weekly Precipitation (mm)",
+       x = "Week",
+       fill = "Year") +
+  labs_pubr() +
+  facet_wrap(~year, scales = "free_x") +
+  theme_pubr(legend = "bottom", margin = TRUE)
+
+describeBy(x = test_avg, group = c("year", "month"))
+
+sum_2017_monsoon <- test_avg %>% 
+  group_by(day, year) %>% 
+  filter(as.integer(day) >= 166 & as.integer(day) <= 273) %>% 
+  summarize(ppt_mm_sum = sum(ppt_mm),
+            ppt_in_sum = sum(ppt_in)) %>% 
+  filter(year == 2017) %>% 
+  group_by(year) %>% 
+  summarize(tot_mm = sum(ppt_mm_sum),
+            tot_in = sum(ppt_in_sum))
+
+sum_2018_monsoon <- test_avg %>% 
+  group_by(day, year) %>% 
+  filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
+  summarize(ppt_mm_sum = sum(ppt_mm),
+            ppt_in_sum = sum(ppt_in)) %>% 
+  filter(year == 2018) %>% 
+  group_by(year) %>% 
+  summarize(tot_mm = sum(ppt_mm_sum),
+            tot_in = sum(ppt_in_sum))
+
+sum_2019_monsoon <- test_avg %>% 
+  group_by(day, year) %>% 
+  filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
+  summarize(ppt_mm_sum = sum(ppt_mm),
+            ppt_in_sum = sum(ppt_in)) %>% 
+  filter(year == 2019) %>% 
+  group_by(year) %>% 
+  summarize(tot_mm = sum(ppt_mm_sum),
+            tot_in = sum(ppt_in_sum))
+
+monsoon_tot <- rbind(sum_2017_monsoon, sum_2018_monsoon, sum_2019_monsoon)
+
+
+hist(sqrt((log10(test_avg$ppt_mm))))
+lm(sqrt(log10(ppt_mm))~year, data = test_avg)
+summary(lm(sqrt(log10(ppt_mm))~year, data = test_avg))
 
 ### soil temp
 

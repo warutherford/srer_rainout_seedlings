@@ -66,8 +66,10 @@ bar_surv_fig <- tot_surv %>%
   scale_x_discrete(labels = c("Wet","Ambient", "Drought")) +
   labs(y = "Mean Survival (%)",
        x = "Precipitation Treatment") +
-  labs_pubr() +
-  theme_pubr(legend = "none")
+  theme_pubr(legend = "none") +
+  labs_pubr()
+
+bar_surv_fig
 
 ggsave(filename = "Figures_Tables/bar_mean_surv.tiff",
        plot = bar_surv_fig,
@@ -89,20 +91,22 @@ line_mean_surv <- tot_surv %>%
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.02,0)) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
-  ylim(0,100) +
   labs(y = "Mean Survival (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
        linetype = "Cohort") +
-  labs_pubr() +
   facet_wrap(~precip, ncol = 3, nrow = 1) +
-  theme_pubr(legend = "bottom", x.text.angle = 45)
+  theme_pubr(legend = "bottom", x.text.angle = 45) +
+  labs_pubr()
 
-ggsave(filename = "Figures_Tables/line_mean_surv.tiff",
+line_mean_surv
+
+ggsave(filename = "Figures_Tables/seedlings/line_mean_surv.tiff",
        plot = line_mean_surv,
        dpi = 800,
        width = 22,
@@ -143,9 +147,3 @@ precip_cont_df %>%
 precip_cont_df %>% 
   ggplot(aes(x = precip_cont, y = survival, color = excl, group = excl)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))
-
-# year 2 zeros in total exclusion tx really bring down the averages
-test %>% dplyr::filter(cohort == "2") %>% 
-  ggplot()+
-  geom_histogram(aes(x = survival))+
-  facet_wrap(~excl)

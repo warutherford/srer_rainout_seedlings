@@ -65,7 +65,8 @@ died_herb <- seedlings_obs_herb %>%
   xlab("Date") +
   ylab("Died Following Herbivory") +
   facet_wrap(~precip, ncol = 3, scales = "free_y") +
-  theme_pubr(legend = "bottom", x.text.angle = 45)
+  theme_pubr(legend = "bottom", x.text.angle = 45) +
+  labs_pubr()
 
 died_herb
 
@@ -104,12 +105,14 @@ herb_died_time_clip_fig <- seedlings_obs %>%
   labs(y = "Died Following Herbivory (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
-       points = "Cohort") +
-  labs_pubr() +
+       linetype = "Cohort") +
   facet_wrap(~precip + clip, ncol = 2) +
-  theme_pubr(legend = "bottom", x.text.angle = 45)
+  theme_pubr(legend = "bottom", x.text.angle = 45)+
+  labs_pubr()
 
-ggsave(filename = "Figures_Tables/herb_died_ppt_clip.tiff",
+herb_died_time_clip_fig 
+
+ggsave(filename = "Figures_Tables/seedlings/herb_died_ppt_clip.tiff",
        plot = herb_died_time_clip_fig,
        dpi = 800,
        width = 22,
@@ -132,12 +135,14 @@ herb_died_time_fig <- seedlings_obs %>%
   labs(y = "Died Following Herbivory (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
-       points = "Cohort") +
-  labs_pubr() +
+       linetype = "Cohort") +
   facet_wrap(~precip+clip, ncol = 2) +
-  theme_pubr(legend = "bottom", x.text.angle = 45)
+  theme_pubr(legend = "bottom", x.text.angle = 45) +
+  labs_pubr()
 
-ggsave(filename = "Figures_Tables/herb_died_ppt.tiff",
+herb_died_time_fig 
+
+ggsave(filename = "Figures_Tables/seedlings/herb_died_ppt.tiff",
        plot = herb_died_time_fig,
        dpi = 800,
        width = 22,
@@ -173,9 +178,11 @@ herb_total_fig <- herb_df_all %>%
   ylim(0, 25) +
   labs(y = "Total Herbivory (%)",
        x = "PPTx") +
-  labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_wrap(~ clip + excl, ncol = 4, nrow = 2) +
+  labs_pubr()
+
+herb_total_fig
 
 ggsave(filename = "Figures_Tables/herb_total_bar.tiff",
        plot = herb_total_fig,
@@ -196,9 +203,11 @@ herb_died_fig <- herb_df_all %>%
   ylim(0, 25) +
   labs(y = "Died Following Herbivory (%)",
        x = "PPTx") +
-  labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_wrap(~ clip + excl, ncol = 4, nrow = 2) +
+  labs_pubr()
+
+herb_died_fig
 
 ggsave(filename = "Figures_Tables/herb_died_bar.tiff",
        plot = herb_died_fig,
@@ -218,9 +227,11 @@ herb_lived_fig <- herb_df_all %>%
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   labs(y = "Lived Following Herbivory (%)",
        x = "PPTx") +
-  labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_wrap(~ clip + excl, ncol = 4, nrow = 2) +
+  labs_pubr()
+
+herb_lived_fig
 
 ggsave(filename = "Figures_Tables/herb_lived_bar.tiff",
        plot = herb_lived_fig,
@@ -256,12 +267,14 @@ died_herb_change_fig <- change %>%
        x = "Date (Month-Year)",
        color = "PPTx",
        linetype = "Cohort") +
-  labs_pubr() +
   facet_wrap(~precip + clip, ncol = 2) +
-  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
+  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE) +
+  labs_pubr()
 # 16080 values are NAs (missing) because of the lag calculation
 
-ggsave(filename = "Figures_Tables/change_herb_died.tiff",
+died_herb_change_fig
+
+ggsave(filename = "Figures_Tables/seedlings/change_herb_died.tiff",
        plot = died_herb_change_fig,
        dpi = 800,
        width = 22,
@@ -285,11 +298,13 @@ tot_herb_change_fig <- change %>%
        x = "Date (Month-Year)",
        color = "PPTx",
        linetype = "Cohort") +
-  labs_pubr() +
   facet_wrap(~precip + clip, ncol = 2) +
-  theme_pubr(legend = "bottom", x.text.angle = 45)
+  theme_pubr(legend = "bottom", x.text.angle = 45) +
+  labs_pubr()
 
-ggsave(filename = "Figures_Tables/change_herb_total.tiff",
+tot_herb_change_fig
+
+ggsave(filename = "Figures_Tables/seedlings/change_herb_total.tiff",
        plot = tot_herb_change_fig,
        dpi = 800,
        width = 22,
@@ -315,11 +330,13 @@ tot_herb_change_fig_all <- change %>%
        x = "Date (Month-Year)",
        color = "PPTx",
        points = "Cohort") +
-  labs_pubr() +
   facet_wrap(~precip, ncol = 3) +
-  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
+  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE) +
+  labs_pubr()
 
-ggsave(filename = "Figures_Tables/change_herb_total_ppt.tiff",
+tot_herb_change_fig_all
+
+ggsave(filename = "Figures_Tables/seedlings/change_herb_total_ppt.tiff",
        plot = tot_herb_change_fig_all,
        dpi = 800,
        width = 22,

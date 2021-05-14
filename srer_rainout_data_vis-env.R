@@ -14,6 +14,7 @@ library(vroom)
 library(ggpubr)
 library(glmmTMB)
 library(dplyr)
+library(multcomp)
 library(psych)
 
 ### Santa Rita Desert Grassland Station Rain Can/DESGR
@@ -117,15 +118,24 @@ ppt_all_fig <- ppt_final %>%
   #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.01,0)) +
   #xlim(0,52)+
   labs(y = "Precipitation (mm)",
        x = "Week",
        fill = "Year") +
-  labs_pubr() +
   facet_wrap(~year, scales = "free_x") +
-  theme_pubr(legend = "bottom", margin = TRUE)
+  theme_pubr(legend = "bottom", margin = TRUE) +
+  labs_pubr()
 
 ppt_all_fig
+
+ggsave(filename = "Figures_Tables/environment/srer_desgr_ppt.tiff",
+       plot = ppt_all_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 # SRER DESGR Summary Stats
 describeBy(x = ppt_summary, group = c("year", "month"))
@@ -213,11 +223,19 @@ temp_all_fig <- temp_summary %>%
   labs(y = "Temperature (°C)",
        x = "Week",
        color = "Year") +
-  labs_pubr() +
   facet_wrap(~year, scales = "free_x") +
-  theme_pubr(legend = "bottom", margin = TRUE)
+  theme_pubr(legend = "bottom", margin = TRUE) +
+  labs_pubr()
 
 temp_all_fig
+
+ggsave(filename = "Figures_Tables/environment/srer_desgr_temp.tiff",
+       plot = temp_all_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 ### Combo SRER DESGR PPT and Temp
 
@@ -244,18 +262,80 @@ site_env_all_fig <- ppt_final %>%
   labs(x = "Week",
        fill = "Precipitation",
        color = "Temperature") +
-  labs_pubr() +
   facet_wrap(~year) +
   theme_pubr(legend = "bottom", margin = TRUE) +
   theme(axis.title.y = element_text(hjust = 0.4,
-                                    vjust = 1),
-        axis.title.y.right = element_text(hjust = 0.9,
+                                    vjust = 1,
+                                    size = 14),
+        axis.title.y.right = element_text(hjust = 0.95,
                                           vjust = 1,
-                                          size = 12))
+                                          size = 14)) +
+  labs_pubr()
   
-
 site_env_all_fig
 
+ggsave(filename = "Figures_Tables/environment/srer_desgr_ppt_temp.tiff",
+       plot = site_env_all_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+### Monsoon only SRER DESGR Precipitation and Temp
+site_env_monsoon_ppt <- ppt_final %>% 
+  mutate(day = as.integer(day)) %>% 
+  filter(day >= 166 & day <= 273)
+         
+site_env_monsoon_temp <- temp_summary %>% 
+  mutate(day = as.integer(day)) %>% 
+  filter(day >= 166 & day <= 273)
+
+site_env_monsoon_fig <- site_env_monsoon_ppt %>% 
+  group_by(day, year) %>% 
+  ggplot(aes(x = day)) +
+  geom_col(aes(y = ppt_mm, fill = year)) +
+  # geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
+  # geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
+  #             size = 1.5, 
+  #             span = 0.07,
+  #             se = FALSE,
+  #             data = site_env_monsoon_temp) +
+  # scale_color_discrete(guide = guide_legend(label = FALSE)) +
+  geom_smooth(mapping = aes(y = ppt_mm), color = "#330066", show.legend = TRUE,
+              size = 1.5,
+              span = 0.5,
+              se = FALSE) +
+  scale_fill_manual(values = c("#0033FF", "#0099FF", "#0066FF")) +
+  scale_x_continuous(breaks = seq(166, 273, 5), expand = c(0,0)) +
+  scale_y_continuous(name = "Precipitation (mm)",
+                     breaks = seq(0, 150, 10),
+                     expand = c(0.01,0)) +
+                     # sec.axis = sec_axis(~.,
+                     #                     name = "Mean Temperature (°C)",
+                     #                     breaks = seq(0, 40, 10)),
+                     # expand = c(0.0,0)) +
+  labs(x = "Day of Year",
+       fill = "Precipitation",
+       color = "Temperature") +
+  facet_wrap(~year) +
+  theme_pubr(legend = "bottom", margin = T, x.text.angle = 45) +
+  theme(axis.title.y = element_text(hjust = 0.4, vjust = 1)) +
+  labs_pubr()
+        # axis.title.y.right = element_text(hjust = 0.9,
+        #                                   vjust = 1,
+        #                                   size = 10))
+
+
+site_env_monsoon_fig
+
+ggsave(filename = "Figures_Tables/environment/srer_desgr_monsoon_ppt.tiff",
+       plot = site_env_monsoon_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 ### soil temp
 
@@ -337,13 +417,13 @@ below_soil_temp_fig <- stemp_series %>%
        x = "Week",
        color = "Grazing/Clipping",
        linetype = "Year") +
-  labs_pubr() +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom")
+  theme_pubr(legend = "bottom") +
+  labs_pubr()
 
 below_soil_temp_fig
 
-ggsave(filename = "Figures_Tables/5cm_soil_temp.tiff",
+ggsave(filename = "Figures_Tables/environment/5cm_soil_temp.tiff",
        plot = below_soil_temp_fig,
        dpi = 800,
        width = 22,
@@ -401,13 +481,13 @@ surface_temp_fig <- atemp_comp %>%
        x = "Week",
        color = "Grazing/Clipping",
        linetype = "Year") +
-  labs_pubr() +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom")
+  theme_pubr(legend = "bottom") +
+  labs_pubr()
 
 surface_temp_fig
 
-ggsave(filename = "Figures_Tables/surface_soil_temp.tiff",
+ggsave(filename = "Figures_Tables/environment/surface_soil_temp.tiff",
        plot = surface_temp_fig,
        dpi = 800,
        width = 22,
@@ -479,16 +559,83 @@ light_fig <- light_comp %>%
        x = "Week",
        color = "Grazing/Clipping",
        linetype = "Year") +
-  labs_pubr() +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom")
+  theme_pubr(legend = "bottom") +
+  labs_pubr()
 
 light_fig
 
-ggsave(filename = "Figures_Tables/surface_light.tiff",
+ggsave(filename = "Figures_Tables/environment/surface_light.tiff",
        plot = light_fig,
        dpi = 800,
        width = 22,
        height = 12,
        units = "in",
        compression = "lzw")
+
+### Soil Moisture 
+
+### NEED TO FINISH
+
+sm <- vroom("Data/site-env-data/soil-moisture/all_sm.csv",
+                    col_types = c(datetime = "T",
+                                  precip = "f",
+                                  clip = "f",
+                                  moisture = "n",
+                                  ids = "f"))
+str(sm)
+
+
+sm_clean <- sm %>% 
+  dplyr::select(-ids) %>% 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  distinct(datetime, precip, clip, .keep_all = TRUE) %>% 
+  mutate(moisture = replace(moisture, moisture < 0, NA)) %>%
+  mutate(moisture = replace(moisture, moisture > 0.3, NA)) %>% 
+  drop_na()
+
+glimpse(sm_clean)
+summary(sm_clean)
+
+
+sm_parse <- sm_clean %>%
+  mutate(day = yday(datetime),
+         week = week(datetime),
+         month = as.factor(month(datetime)),
+         year = as.factor(year(datetime))) %>% 
+  group_by(precip, clip, day) %>% 
+  summarise(sm_mean = mean(moisture))
+
+test <- sm_parse %>% 
+  filter(precip == "RO")
+
+summary(test$sm_mean)
+
+sm_fig <- sm_parse %>% 
+  group_by(precip, clip, day) %>% 
+  #filter(year == 2019) %>% 
+  #filter(clip == 'Clipped') %>% 
+  ggplot(aes(x = day, y = sm_mean, color = precip, group = precip)) +
+  geom_line() +
+  #geom_smooth(span = 0.1, se = TRUE) +
+  #geom_line(size = 1) +
+  #scale_color_manual(values = c("#FF3300", "#FF3300", "#FF3300")) +
+  #scale_x_continuous(breaks=seq(0, 52, 4)) +
+  labs(y = "SM",
+       x = "Day of Year",
+       color = "Precipitation") +
+  #facet_wrap(~clip, nrow = 2, scales = "free_x") +
+  theme_pubr(legend = "bottom", margin = TRUE) +
+  labs_pubr()
+
+sm_fig
+
+# ggsave(filename = "Figures_Tables/environment/srer_desgr_temp.tiff",
+#        plot = temp_all_fig,
+#        dpi = 800,
+#        width = 22,
+#        height = 12,
+#        units = "in",
+#        compression = "lzw")
+
+

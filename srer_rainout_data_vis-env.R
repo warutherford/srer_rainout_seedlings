@@ -603,28 +603,28 @@ sm_parse <- sm_clean %>%
          week = week(datetime),
          month = as.factor(month(datetime)),
          year = as.factor(year(datetime))) %>% 
-  group_by(precip, clip, day) %>% 
+  group_by(precip, clip, day, year) %>% 
   summarise(sm_mean = mean(moisture))
 
-test <- sm_parse %>% 
-  filter(precip == "RO")
-
-summary(test$sm_mean)
+sm_summary <- sm_parse %>% 
+  filter(year != 2017 & year != 2020) %>% 
+  group_by(precip) %>% 
+  summarise(sm_mean_year = mean(sm_mean))
 
 sm_fig <- sm_parse %>% 
-  group_by(precip, clip, day) %>% 
-  #filter(year == 2019) %>% 
+  group_by(precip, clip) %>% 
+  filter(year != 2017 & year != 2020) %>% 
   #filter(clip == 'Clipped') %>% 
   ggplot(aes(x = day, y = sm_mean, color = precip, group = precip)) +
-  geom_line() +
-  #geom_smooth(span = 0.1, se = TRUE) +
+  #geom_line() +
+  geom_smooth(span = 0.75, se = FALSE) +
   #geom_line(size = 1) +
   #scale_color_manual(values = c("#FF3300", "#FF3300", "#FF3300")) +
   #scale_x_continuous(breaks=seq(0, 52, 4)) +
   labs(y = "SM",
        x = "Day of Year",
        color = "Precipitation") +
-  #facet_wrap(~clip, nrow = 2, scales = "free_x") +
+  facet_wrap(~clip, scales = "free_x") +
   theme_pubr(legend = "bottom", margin = TRUE) +
   labs_pubr()
 

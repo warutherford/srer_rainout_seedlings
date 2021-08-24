@@ -62,7 +62,7 @@ bar_surv_fig <- tot_surv %>%
   ggplot(mapping = aes(x = precip, y = mean_precip_per, fill = precip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("blue1","grey30","red1")) +
+  scale_fill_manual(values = c("blue1","grey30","#ba7525")) +
   scale_x_discrete(labels = c("Wet","Ambient", "Drought")) +
   labs(y = "Mean Survival (%)",
        x = "Precipitation Treatment") +
@@ -90,7 +90,7 @@ line_mean_surv <- tot_surv %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
-  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.02,0)) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
@@ -138,7 +138,7 @@ precip_cont_df %>%
   ggplot(aes(x = precip_cont, y = mean_surv, color = clip, group = clip)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))+
   labs(y = "Mean Survival (%)",
-       x = "PPT (mm)",
+       x = "Precipitation (mm)",
        color = "Grazing") +
   labs_pubr() +
   facet_wrap(~excl, nrow = 1)

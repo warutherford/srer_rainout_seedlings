@@ -5,10 +5,10 @@
 Data/*
 
 # Figures_Tables, ignore everything in folder
-# Figures_Tables/*
+Figures_Tables/
 
 # Model_Outputs, ignore everything in folder
-# Model_Outputs/*
+#Model_Outputs/*
 
 # renv, ignore everything in folder
 renv/*

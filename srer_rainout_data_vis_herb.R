@@ -57,11 +57,11 @@ died_herb <- seedlings_obs_herb %>%
   group_by(precip, clip, excl, cohort, date) %>% 
   mutate(date = as.Date(date)) %>% 
   ggplot(aes(x = date, y = herb_died, group = precip, color = precip)) +
-  geom_point(size=2, alpha=0.4) +
-  geom_smooth(method="loess", colour="blue", size=1.5, se = FALSE) +
+  geom_point(size = 2, alpha = 0.4) +
+  geom_smooth(method = "loess", color = "#885a99", size = 1.5, se = FALSE) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
-  scale_color_manual(values = c("grey30", "blue1", "red1")) +
-  ylim(0,1)+
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
+  ylim(0, 1) +
   xlab("Date") +
   ylab("Died Following Herbivory") +
   facet_wrap(~precip, ncol = 3, scales = "free_y") +
@@ -97,7 +97,7 @@ herb_died_time_clip_fig <- seedlings_obs %>%
                                 "RO" = "Drought",
                                 "IR" = "Wet")) %>%
   ggplot(aes(x = date, y = 100*(herb_died/10), group = cohort, color = precip, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30", "red1", "blue1")) +
+  scale_color_manual(values = c("grey30", "#ba7525", "blue1")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   stat_smooth(method = "loess") +
   #ylim(0, 15) +
@@ -125,7 +125,7 @@ herb_died_time_fig <- seedlings_obs %>%
                                 "RO" = "Drought",
                                 "IR" = "Wet")) %>%
   ggplot(aes(x = date, y = 100*(herb_died/10), group = cohort, color = precip, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30", "red1", "blue1")) +
+  scale_color_manual(values = c("grey30", "#ba7525", "blue1")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   stat_smooth(method = "loess") +
   #ylim(0, 15) +
@@ -168,7 +168,7 @@ herb_total_fig <- herb_df_all %>%
   ggplot(mapping = aes(x = precip, y = tot_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbTOT, ymax = upper_herbTOT), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30","red1", "blue1")) +
+  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   ylim(0, 25) +
   labs(y = "Total Herbivory (%)",
@@ -191,7 +191,7 @@ herb_died_fig <- herb_df_all %>%
   ggplot(mapping = aes(x = precip, y = died_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbD, ymax = upper_herbD), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30","red1", "blue1")) +
+  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   ylim(0, 25) +
   labs(y = "Died Following Herbivory (%)",
@@ -214,7 +214,7 @@ herb_lived_fig <- herb_df_all %>%
   ggplot(mapping = aes(x = precip, y = live_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbL, ymax = upper_herbL), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30","red1", "blue1")) +
+  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   labs(y = "Lived Following Herbivory (%)",
        x = "PPTx") +
@@ -248,7 +248,7 @@ died_herb_change_fig <- change %>%
                                 "RO" = "Drought"),
          date = as.Date(date)) %>% 
   ggplot(aes(x = date, y = 100*herb_died_lag, color = precip, group = cohort, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "4 months") +
   stat_smooth(method = "loess", span = 0.25) +
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
@@ -277,7 +277,7 @@ tot_herb_change_fig <- change %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought")) %>% 
   ggplot(aes(x = date, y = 100*herb_tot_lag, color = precip, group = cohort, linetype = cohort)) + 
-  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   stat_smooth(method = "loess", span = 0.25) +
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
@@ -307,7 +307,7 @@ tot_herb_change_fig_all <- change %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought")) %>% 
   ggplot(aes(x = date, y = 100*herb_tot_lag, color = precip)) + 
-  scale_color_manual(values = c("grey30", "blue1", "red1")) +
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   geom_smooth(method = "loess", se = TRUE, span = 0.25) +
   ylim(0,NA) +

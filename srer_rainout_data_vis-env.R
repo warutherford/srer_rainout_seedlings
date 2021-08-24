@@ -4,8 +4,6 @@
 # email:arutherford@email.arizona.edu
 # 2021-05-10
 
-
-# load packages
 # Load packages
 library(tidyverse)
 library(lubridate)
@@ -218,13 +216,13 @@ temp_all_fig <- temp_summary %>%
   ggplot(aes(x = week, y = site_temp, color = year)) +
   geom_smooth(span = 0.07, se = FALSE) +
   #geom_line(size = 1) +
-  scale_color_manual(values = c("#FF3300", "#FF3300", "#FF3300")) +
+  scale_color_manual(values = c("#DB4325", "#DB4325", "#DB4325")) +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
   labs(y = "Temperature (°C)",
        x = "Week",
        color = "Year") +
   facet_wrap(~year, scales = "free_x") +
-  theme_pubr(legend = "bottom", margin = TRUE) +
+  theme_pubr(legend = "none", margin = TRUE) +
   labs_pubr()
 
 temp_all_fig
@@ -244,7 +242,7 @@ site_env_all_fig <- ppt_final %>%
   ggplot(aes(x = week)) +
   geom_col(aes(y = ppt_mm, fill = year)) +
   #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
-  geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
+  geom_smooth(mapping = aes(y = site_temp, color = "#DB4325"),
               size = 1.5, 
               span = 0.07,
               se = FALSE,
@@ -392,7 +390,7 @@ stemp_series <- stemplight %>%
 
 # test sig diff of daily below ground soil temp between treatments
 # data normal?
-hist(stemp_series$dailyavg) # loods good
+hist(stemp_series$dailyavg) # looks good
 
 below_anova <- aov(dailyavg ~ precip*clip*year, data = stemp_series)
 
@@ -597,7 +595,6 @@ sm_clean <- sm %>%
 glimpse(sm_clean)
 summary(sm_clean)
 
-
 sm_parse <- sm_clean %>%
   mutate(day = yday(datetime),
          week = week(datetime),
@@ -608,34 +605,34 @@ sm_parse <- sm_clean %>%
 
 sm_summary <- sm_parse %>% 
   filter(year != 2017 & year != 2020) %>% 
-  group_by(precip) %>% 
+  group_by(precip, clip) %>% 
   summarise(sm_mean_year = mean(sm_mean))
 
 sm_fig <- sm_parse %>% 
   group_by(precip, clip) %>% 
   filter(year != 2017 & year != 2020) %>% 
-  #filter(clip == 'Clipped') %>% 
-  ggplot(aes(x = day, y = sm_mean, color = precip, group = precip)) +
-  #geom_line() +
-  geom_smooth(span = 0.75, se = FALSE) +
-  #geom_line(size = 1) +
-  #scale_color_manual(values = c("#FF3300", "#FF3300", "#FF3300")) +
-  #scale_x_continuous(breaks=seq(0, 52, 4)) +
-  labs(y = "SM",
-       x = "Day of Year",
+  ggplot(aes(x = day, y = 100*sm_mean, color = precip, group = precip)) +
+  geom_smooth(span = 0.25, se = TRUE, size = 2) +
+  geom_hline(data = sm_summary, aes(yintercept = 100*sm_mean_year, color = precip),
+             size = 1, linetype = 2) +
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525"),
+                     labels = c("Ambient", "Wet", "Drought")) +
+  scale_x_continuous(breaks=seq(0, 365, 50)) +
+  labs(y = "Volumetric Water Content (%)",
+       x = "Julian Date",
        color = "Precipitation") +
-  facet_wrap(~clip, scales = "free_x") +
+  facet_wrap(~clip, scales = "free_x", ncol=2) +
   theme_pubr(legend = "bottom", margin = TRUE) +
   labs_pubr()
 
 sm_fig
 
-# ggsave(filename = "Figures_Tables/environment/srer_desgr_temp.tiff",
-#        plot = temp_all_fig,
-#        dpi = 800,
-#        width = 22,
-#        height = 12,
-#        units = "in",
-#        compression = "lzw")
+ggsave(filename = "Figures_Tables/environment/srer_desgr_sm_pptx.tiff",
+       plot = sm_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 

@@ -161,6 +161,11 @@ herb_df_all <- seedlings_obs %>%
          lower_herbL = live_mean - mean_herbL_se,
          upper_herbTOT = tot_mean + mean_herbTOT_se,
          lower_herbTOT = tot_mean - mean_herbTOT_se) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Sm Mammals Excl",
+                              "Total" = "All Excl")) %>% 
   ungroup()
 
 # bar graph of total percentage of seedlings with herbivory
@@ -169,13 +174,13 @@ herb_total_fig <- herb_df_all %>%
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbTOT, ymax = upper_herbTOT), width = 0.25, position = position_dodge(), size = 1) +
   scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
-  scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
-  ylim(0, 25) +
+  scale_x_discrete(labels = c("Ambient", "   Drought", "Wet")) +
+  ylim(0, 30) +
   labs(y = "Total Herbivory (%)",
        x = "PPTx") +
   labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_grid(cols = vars(clip), rows = vars(excl))
 
 ggsave(filename = "Figures_Tables/herb_total_bar.tiff",
        plot = herb_total_fig,
@@ -198,7 +203,7 @@ herb_died_fig <- herb_df_all %>%
        x = "PPTx") +
   labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_grid(cols = vars(clip), rows = vars(excl))
 
 ggsave(filename = "Figures_Tables/herb_died_bar.tiff",
        plot = herb_died_fig,
@@ -218,9 +223,10 @@ herb_lived_fig <- herb_df_all %>%
   scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
   labs(y = "Lived Following Herbivory (%)",
        x = "PPTx") +
+  #ylim(0, 5)+
   labs_pubr() +
   theme_pubr(legend = "none") +
-  facet_wrap(~ clip + excl, ncol = 4, nrow = 2)
+  facet_grid(cols = vars(clip), rows = vars(excl))
 
 ggsave(filename = "Figures_Tables/herb_lived_bar.tiff",
        plot = herb_lived_fig,

@@ -117,7 +117,7 @@ zi.srer.herb.pe.int.sum <- summary(zi.srer.herb.pe.int)
 zi.srer.herb.pe.int.sum
 
 # compare AIC scores of all potential models for model selection
-aic.compare.final <- AICctab(zi.srer.herb.p,
+aic.compare.final <- AICtab(zi.srer.herb.p,
                             zi.srer.herb.pe,
                             zi.srer.herb.pce,
                             zi.srer.herb.full,

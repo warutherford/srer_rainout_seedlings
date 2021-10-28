@@ -152,9 +152,9 @@ herb_df_all <- seedlings_obs %>%
   summarise(died_mean = 100*(mean(herb_died)/10),
             live_mean = 100*(mean(herb_lived)/10),
             tot_mean = 100*(mean(tot_herbivory)/10),
-            mean_herbD_se = 100*(sd(herb_died)/n()),
-            mean_herbL_se = 100*(sd(herb_lived)/n()),
-            mean_herbTOT_se = 100*(sd(tot_herbivory)/n())) %>% 
+            mean_herbD_se = 100*(sd(herb_died)/sqrt(n())),
+            mean_herbL_se = 100*(sd(herb_lived)/sqrt(n())),
+            mean_herbTOT_se = 100*(sd(tot_herbivory)/sqrt(n()))) %>% 
   mutate(upper_herbD = died_mean + mean_herbD_se,
          lower_herbD = died_mean - mean_herbD_se,
          upper_herbL = live_mean + mean_herbL_se,
@@ -164,18 +164,22 @@ herb_df_all <- seedlings_obs %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
                               "Ants" = "Ants Excl",
-                              "Rodents" = "Sm Mammals Excl",
-                              "Total" = "All Excl")) %>% 
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "Total Excl")) %>% 
   ungroup()
 
 # bar graph of total percentage of seedlings with herbivory
-herb_total_fig <- herb_df_all %>% 
+herb_total_fig <- herb_df_all %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = precip, y = tot_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbTOT, ymax = upper_herbTOT), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
-  scale_x_discrete(labels = c("Ambient", "   Drought", "Wet")) +
-  ylim(0, 30) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  ylim(0, 35) +
   labs(y = "Total Herbivory (%)",
        x = "PPTx") +
   labs_pubr() +
@@ -193,12 +197,16 @@ ggsave(filename = "Figures_Tables/herb_total_bar.tiff",
 
 # bar graph of percentage of seedlings that died from herbivory
 herb_died_fig <- herb_df_all %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = precip, y = died_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbD, ymax = upper_herbD), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
-  scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
-  ylim(0, 25) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  ylim(0, 30) +
   labs(y = "Died Following Herbivory (%)",
        x = "PPTx") +
   labs_pubr() +
@@ -216,11 +224,15 @@ ggsave(filename = "Figures_Tables/herb_died_bar.tiff",
 
 # bar graph of percentage of seedlings that lived following herbivory
 herb_lived_fig <- herb_df_all %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = precip, y = live_mean, fill = precip)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge()) +
   geom_errorbar(aes(ymin = lower_herbL, ymax = upper_herbL), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30", "#ba7525", "blue1")) +
-  scale_x_discrete(labels = c("Ambient", "Drought", "Wet")) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
   labs(y = "Lived Following Herbivory (%)",
        x = "PPTx") +
   #ylim(0, 5)+

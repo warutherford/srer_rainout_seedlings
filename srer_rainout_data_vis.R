@@ -35,7 +35,9 @@ glimpse(seedlings_obs)
 tot_surv <- seedlings_obs %>% 
   group_by(precip, cohort, date) %>% 
   summarise(mean_surv = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
+            sd_surv = sd(survival),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv,
          date = as.Date(date))
@@ -56,14 +58,14 @@ bar_surv_fig <- tot_surv %>%
   mutate(upper = mean_precip_per + mean_se_per,
          lower = mean_precip_per - mean_se_per) %>%
   mutate(precip = recode_factor(precip,
-                                       "IR" = "Wet",
                                       "Control" = "Ambient",
+                                      "IR" = "Wet",
                                        "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = precip, y = mean_precip_per, fill = precip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("blue1","grey30","#ba7525")) +
-  scale_x_discrete(labels = c("Wet","Ambient", "Drought")) +
+  scale_fill_manual(values = c("grey30","blue1","#ba7525")) +
+  scale_x_discrete(labels = c("Ambient","Wet", "Drought")) +
   labs(y = "Mean Survival (%)",
        x = "Precipitation Treatment") +
   theme_pubr(legend = "none") +
@@ -79,6 +81,36 @@ ggsave(filename = "Figures_Tables/bar_mean_surv.tiff",
        units = "in",
        compression = "lzw")
 
+# create data set for clip
+tot_surv_c <- seedlings_obs %>% 
+  group_by(clip) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+bar_cliponly_fig <- tot_surv_c %>%
+  ggplot(mapping = aes(x = clip, y = mean_surv, fill = clip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("brown","darkorange")) +
+  scale_x_discrete(labels = c("Clipped","Unclipped")) +
+  labs(y = "Mean Survival (%)",
+       x = "Grazing Treatment") +
+  theme_pubr(legend = "none") +
+  labs_pubr()
+
+bar_cliponly_fig
+
+ggsave(filename = "Figures_Tables/bar_cliponly_surv.tiff",
+       plot = bar_cliponly_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 # plot survival over time with error bars
 
@@ -114,13 +146,86 @@ ggsave(filename = "Figures_Tables/seedlings/line_mean_surv.tiff",
        units = "in",
        compression = "lzw")
 
-# create data set for precip and excl
-tot_surv_pe <- seedlings_obs %>% 
-  group_by(precip, excl) %>% 
-  summarise(mean_surv = mean(survival),
-            se_surv = (sd(survival)/n())) %>%
+# create data set for precip and excl and clip
+tot_surv_pce <- seedlings_obs %>% 
+  group_by(precip, excl, clip) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
+
+bar_pce_fig <- tot_surv_pce %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "Total Excl")) %>% 
+  ggplot(mapping = aes(x = precip, y = mean_surv, fill = precip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  ylim(0, 35) +
+  labs(y = "Mean Survival (%)",
+       x = "PPTx") +
+  theme_pubr(legend = "none") +
+  facet_grid(cols = vars(clip), rows = vars(excl)) +
+  labs_pubr()
+
+bar_pce_fig
+
+ggsave(filename = "Figures_Tables/bar_alltx_surv.tiff",
+       plot = bar_pce_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
+# create data set for precip and clip
+tot_surv_pc <- seedlings_obs %>% 
+  group_by(precip, clip, cohort) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+bar_clip_fig <- tot_surv_pc %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(mapping = aes(x = clip, y = mean_surv, fill = clip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("brown","darkorange")) +
+  scale_x_discrete(labels = c("Clipped","Unclipped")) +
+  ylim(0, 40) +
+  labs(y = "Mean Survival (%)",
+       x = "Grazing Treatment") +
+  theme_pubr(legend = "none") +
+  facet_wrap(~precip+cohort)+
+  labs_pubr()
+
+bar_clip_fig
+
+ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
+       plot = bar_clip_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
 
 # if want to look at effects treating precip as continuous
 precip_cont_df <- seedlings_obs %>% 

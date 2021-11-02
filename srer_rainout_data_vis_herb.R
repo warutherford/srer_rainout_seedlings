@@ -11,6 +11,7 @@ library(vroom)
 library(ggpubr)
 library(glmmTMB)
 library(dplyr)
+library(psych)
 
 seedlings <- vroom("Data/seedlings_combined.csv",
                    col_select = -c(1),
@@ -145,6 +146,35 @@ ggsave(filename = "Figures_Tables/herb_died_ppt.tiff",
        units = "in",
        compression = "lzw")
 
+# Percentage of seedlings that lived following herbivory by pptx
+herb_lived_time_fig <- seedlings_obs %>%
+  group_by(precip, cohort) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "RO" = "Drought",
+                                "IR" = "Wet")) %>%
+  ggplot(aes(x = date, y = 100*(herb_lived/10), group = cohort, color = precip, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "#ba7525", "blue1")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  stat_smooth(method = "loess") +
+  #ylim(0, 15) +
+  labs(y = "Lived Following Herbivory (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       points = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip+cohort, ncol = 3) +
+  theme_pubr(legend = "bottom", x.text.angle = 45)
+
+ggsave(filename = "Figures_Tables/herb_lived_ppt.tiff",
+       plot = herb_died_time_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
 
 # create herbivory only df for quicker graphing
 herb_df_all <- seedlings_obs %>% 
@@ -257,7 +287,7 @@ change <- seedlings_obs_herb %>%
          herb_lived_lag = dplyr::lag(herb_lived, n = 1, default = NA, order_by = date),
          herb_tot_lag = dplyr::lag(tot_herbivory, n = 1, default = NA, order_by = date))
 
-# below plots all herbivory regardless of resulting death or live across precip and clipping txs
+# below plots all herbivory resulting in death across precip and clipping txs
 died_herb_change_fig <- change %>% 
   group_by(precip, clip, excl, cohort, date) %>% 
   mutate(precip = recode_factor(precip,
@@ -286,6 +316,38 @@ ggsave(filename = "Figures_Tables/change_herb_died.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
+
+
+# below plots change in herbivory but lived across precip and clipping txs
+live_herb_change_fig <- change %>% 
+  group_by(precip, clip, excl, cohort, date) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought"),
+         date = as.Date(date)) %>% 
+  ggplot(aes(x = date, y = 100*herb_lived_lag, color = precip, group = cohort, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "4 months") +
+  stat_smooth(method = "loess", span = 0.25) +
+  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  labs(y = "Change Lived Following Herbivory (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       linetype = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip + clip, ncol = 2) +
+  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
+# 16080 values are NAs (missing) because of the lag calculation
+
+ggsave(filename = "Figures_Tables/change_herb_lived.tiff",
+       plot = died_herb_change_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
 
 # below plots all herbivory regardless of resulting in death or live across precip and clipping txs
 tot_herb_change_fig <- change %>% 

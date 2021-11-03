@@ -173,7 +173,7 @@ ggsave(filename = "Figures_Tables/bar_clip_germ.tiff",
 
 # create data set for clip
 tot_surv_c <- seedlings_obs %>% 
-  group_by(clip) %>% 
+  group_by(clip,cohort) %>% 
   summarise(mean_germ = 100*mean(tot_germination/10),
             sd_germ = 100*sd(tot_germination/10),
             counts = n(),
@@ -190,11 +190,12 @@ bar_cliponly_germ_fig <- tot_surv_c %>%
   labs(y = "Mean Germination (%)",
        x = "Grazing Treatment") +
   theme_pubr(legend = "none") +
+  facet_wrap(~cohort)+
   labs_pubr()
 
 bar_cliponly_germ_fig
 
-ggsave(filename = "Figures_Tables/bar_cliponly_germ.tiff",
+ggsave(filename = "Figures_Tables/bar_clipcohort_germ.tiff",
        plot = bar_cliponly_germ_fig,
        dpi = 800,
        width = 22,

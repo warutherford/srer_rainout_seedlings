@@ -236,7 +236,47 @@ precip_cont_df <- seedlings_obs %>%
                                      "RO" = "35")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-# clip vs unclip across exclusion treatments
+
+# predicted survival clip vs unclip across exclusion treatments
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_pred_surv = 100*mean(pred_surv/10)) %>% #convert survival to a percentage
+  ggplot(aes(x = precip_cont, y = mean_pred_surv, color = clip, group = clip)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Mean Predicted Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Grazing") +
+  labs_pubr() +
+  facet_wrap(~excl, nrow = 1)
+
+# predicted survival only exclusion txs
+precip_cont_df %>% 
+  ggplot(aes(x = precip_cont, y = 100*(pred_surv/10), color = excl, group = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Predicted Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Excl")+
+  labs_pubr()+
+  theme_pubr()
+
+# predicted survival only PPT
+pred_surv_cont <- precip_cont_df %>% 
+  ggplot(aes(x = precip_cont, y = 100*(pred_surv/10))) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Predicted Survival (%)",
+       x = "Precipitation (mm)")+
+  labs_pubr()+
+  theme_pubr()
+
+ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
+       plot = pred_surv_cont,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# obs clip vs unclip across exclusion treatments
 precip_cont_df %>%
   group_by(precip_cont, precip, clip, excl) %>% 
   summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
@@ -246,9 +286,20 @@ precip_cont_df %>%
        x = "Precipitation (mm)",
        color = "Grazing") +
   labs_pubr() +
-  facet_wrap(~excl, nrow = 1)
+  facet_wrap(~excl, nrow = 1)+
+  theme_pubr()
 
 # only exclusion txs
-precip_cont_df %>% 
-  ggplot(aes(x = precip_cont, y = survival, color = excl, group = excl)) + 
-  geom_smooth(method = "glm", formula = y ~ log(x))
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
+  ggplot(aes(x = precip_cont, y = mean_surv, color = excl, group = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Mean Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  labs_pubr() +
+  theme_pubr()
+
+
+describeBy(seedlings_obs, group = "excl")

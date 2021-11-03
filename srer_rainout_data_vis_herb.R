@@ -320,7 +320,7 @@ ggsave(filename = "Figures_Tables/change_herb_died.tiff",
 
 # below plots change in herbivory but lived across precip and clipping txs
 live_herb_change_fig <- change %>% 
-  group_by(precip, clip, excl, cohort, date) %>% 
+  group_by(precip, cohort, date) %>% 
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
@@ -336,12 +336,72 @@ live_herb_change_fig <- change %>%
        color = "PPTx",
        linetype = "Cohort") +
   labs_pubr() +
-  facet_wrap(~precip + clip, ncol = 2) +
+  facet_wrap(~precip, ncol = 1) +
   theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
 # 16080 values are NAs (missing) because of the lag calculation
 
 ggsave(filename = "Figures_Tables/change_herb_lived.tiff",
        plot = died_herb_change_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# below plots change in herbivory but lived across precip
+lived_herb_change_fig_all <- change %>% 
+  group_by(precip, date) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought")) %>% 
+  ggplot(aes(x = date, y = 100*herb_lived_lag, color = precip)) + 
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  geom_smooth(method = "loess", se = TRUE, span = 0.25) +
+  ylim(0,NA) +
+  labs(y = "Change in Seedling Herbivory Lived (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       points = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip, ncol = 3) +
+  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
+
+ggsave(filename = "Figures_Tables/change_herb_lived_ppt.tiff",
+       plot = lived_herb_change_fig_all,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# below plots ratio of seedlings that died to lived
+lived_herb_ratio_fig_all <- change %>% 
+  group_by(precip, clip, cohort, date) %>% 
+  summarize(herb_live_count = sum(herb_lived, na.rm = T),
+            herb_died_count = sum(herb_died, na.rm = T),
+            herb_tot_count = sum(tot_herbivory, na.rm = T),
+            herb_ratio = (herb_live_count/herb_died_count)) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought")) %>% 
+  ggplot(aes(x = date, y = herb_ratio, color = precip, group = cohort, linetype = cohort)) + 
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  geom_smooth(method = "loess", se = F, span = 0.50) +
+  #ylim(0,1.0) +
+  labs(y = "Ratio lived vs died following herbivory",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       points = "Cohort") +
+  labs_pubr() +
+  facet_wrap(~precip, ncol = 3) +
+  theme_pubr(legend = "bottom", x.text.angle = 45, border = TRUE)
+
+ggsave(filename = "Figures_Tables/herb_lived_ratio_ppt.tiff",
+       plot = lived_herb_ratio_fig_all,
        dpi = 800,
        width = 22,
        height = 12,

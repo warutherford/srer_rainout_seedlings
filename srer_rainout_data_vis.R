@@ -146,6 +146,15 @@ ggsave(filename = "Figures_Tables/seedlings/line_mean_surv.tiff",
        units = "in",
        compression = "lzw")
 
+tot_surv_summary <- seedlings_obs %>% 
+  group_by(precip, cohort, date) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
 # create data set for precip and excl and clip
 tot_surv_pce <- seedlings_obs %>% 
   group_by(precip, excl, clip) %>% 

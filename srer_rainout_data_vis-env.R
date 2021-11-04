@@ -92,7 +92,16 @@ ppt_summary <- ppt_comp_all %>%
   rowid_to_column('id') %>% 
   filter(id != 1) %>% 
   dplyr::select(-id)
-  
+
+ppt_summary_site <- ppt_comp_all %>% 
+  group_by(day, week, month, year, site) %>% 
+  summarise(ppt = mean(ppt_diff)) %>% 
+  mutate(ppt_in = ppt/100,
+         ppt_mm = ppt*0.254) %>% 
+  rowid_to_column('id') %>% 
+  filter(id != 1) %>% 
+  dplyr::select(-id) 
+
 ppt_start <-  ppt_comp_all %>% 
   group_by(day, week, month, year) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
@@ -107,6 +116,10 @@ ppt_start <-  ppt_comp_all %>%
 
 ppt_final <- full_join(ppt_summary, ppt_start) %>% 
   arrange(year, month, week, day)
+
+ppt_final %>% 
+  group_by(year) %>% 
+  summarise(ppt_sum = sum(ppt_mm))
 
 # PPT figure all years
 ppt_all_fig <- ppt_final %>% 
@@ -248,7 +261,7 @@ site_env_all_fig <- ppt_final %>%
               se = FALSE,
               data = temp_summary) +
   scale_color_discrete(guide = guide_legend(label = FALSE)) +
-  scale_fill_manual(values = c("#0033FF", "#0099FF", "#0066FF")) +
+  scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
   scale_x_continuous(breaks = seq(1, 52, 3),
                      expand = c(0,0)) +
   scale_y_continuous(name = "Precipitation (mm)",
@@ -284,6 +297,22 @@ ggsave(filename = "Figures_Tables/environment/srer_desgr_ppt_temp.tiff",
 site_env_monsoon_ppt <- ppt_final %>% 
   mutate(day = as.integer(day)) %>% 
   filter(day >= 166 & day <= 273)
+
+site_env_monsoon_ppt %>% 
+  group_by(year) %>% 
+  summarise(sum_ppt = sum(ppt_mm))
+
+# number of rain days >= 0.5
+count_raindays <- site_env_monsoon_ppt %>% 
+  group_by(day, year) %>% 
+  summarise(count_ppt = sum(ppt_mm > 0))
+
+count_raindays %>% 
+  group_by(year) %>% 
+  summarise(sum_days = sum(count_ppt))
+
+count_raindays_arranged <- count_raindays %>% 
+  arrange(year, day)
          
 site_env_monsoon_temp <- temp_summary %>% 
   mutate(day = as.integer(day)) %>% 
@@ -295,16 +324,16 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   geom_col(aes(y = ppt_mm, fill = year)) +
   # geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   # geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
-  #             size = 1.5, 
+  #             size = 1.5,
   #             span = 0.07,
   #             se = FALSE,
   #             data = site_env_monsoon_temp) +
   # scale_color_discrete(guide = guide_legend(label = FALSE)) +
-  geom_smooth(mapping = aes(y = ppt_mm), color = "#330066", show.legend = TRUE,
-              size = 1.5,
-              span = 0.5,
-              se = FALSE) +
-  scale_fill_manual(values = c("#0033FF", "#0099FF", "#0066FF")) +
+  # geom_smooth(mapping = aes(y = ppt_mm), color = "#330066", show.legend = TRUE,
+  #             size = 1.5,
+  #             span = 0.5,
+  #             se = FALSE) +
+  scale_fill_manual(values = c("#0099FF", "#0033FF" , "#0066FF")) +
   scale_x_continuous(breaks = seq(166, 273, 5), expand = c(0,0)) +
   scale_y_continuous(name = "Precipitation (mm)",
                      breaks = seq(0, 150, 10),

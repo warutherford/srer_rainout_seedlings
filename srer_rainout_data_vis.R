@@ -44,12 +44,6 @@ tot_surv <- seedlings_obs %>%
 
 summary(tot_surv)
 
-tot_surv %>%
-  group_by(precip, cohort) %>% 
-  summarise(mean_precip_per = (100*mean(mean_surv)/10),
-            mean_se_per = (100*mean(se_surv)/10)) %>% 
-  mutate(upper = mean_precip_per + mean_se_per,
-         lower = mean_precip_per - mean_se_per)
 
 bar_surv_fig <- tot_surv %>%
   group_by(precip) %>% 
@@ -112,10 +106,7 @@ ggsave(filename = "Figures_Tables/bar_cliponly_surv.tiff",
        units = "in",
        compression = "lzw")
 
-# plot survival over time with error bars
-
-#labels.precip <- factor(tot_surv$precip, labels = c("Ambient", "Drought", "Wet"))
-
+# plot survival over time, all dates
 line_mean_surv <- tot_surv %>% 
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
@@ -123,11 +114,12 @@ line_mean_surv <- tot_surv %>%
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.02,0)) +
+  #scale_y_continuous(breaks = seq(0, 120, 10), expand = c(0.02,0)) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
   geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  ylim(0, 100) +
   labs(y = "Mean Survival (%)",
        x = "Date (Month-Year)",
        color = "PPTx",
@@ -146,8 +138,68 @@ ggsave(filename = "Figures_Tables/seedlings/line_mean_surv.tiff",
        units = "in",
        compression = "lzw")
 
+
+# remove the lead up survival to start max for each cohort (following Archer suggestions)
+surv_small_1 <- tot_surv %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2017-07-21")
+
+surv_small_2 <- tot_surv %>% 
+  filter(cohort == 2) %>% 
+  filter(date >= "2018-07-18")
+
+surv_small_3 <- tot_surv %>% 
+  filter(cohort == 3 & precip != "RO") %>% 
+  filter(date >= "2019-08-03")
+
+surv_small_drought <- tot_surv %>% 
+  filter(precip == "RO" & date >= "2019-08-10")
+
+surv_small_all <- rbind(surv_small_1, surv_small_2, surv_small_3, surv_small_drought)
+
+line_mean_surv_archer <- surv_small_all %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
+  scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
+  #scale_y_continuous(breaks = seq(0, 120, 10), expand = c(0.02,0)) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
+  geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
+  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  scale_fill_manual(values = c("grey30","blue1", "red1")) +
+  ylim(0, 100) +
+  labs(y = "Mean Survival (%)",
+       x = "Date (Month-Year)",
+       color = "PPTx",
+       linetype = "Cohort") +
+  facet_wrap(~precip, ncol = 3, nrow = 1) +
+  theme_pubr(legend = "bottom", x.text.angle = 45) +
+  labs_pubr()
+
+line_mean_surv_archer
+
+ggsave(filename = "Figures_Tables/seedlings/line_mean_surv_archer.tiff",
+       plot = line_mean_surv_archer,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# calculate summary info
 tot_surv_summary <- seedlings_obs %>% 
   group_by(precip, cohort, date) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+tot_surv_summary_pcohort <- seedlings_obs %>% 
+  group_by(precip, cohort) %>% 
   summarise(mean_surv = 100*mean(survival/10),
             sd_surv = 100*sd(survival/10),
             counts = n(),

@@ -57,10 +57,11 @@ ppt_parse <- ppt_temp_series %>%
   distinct(datetime, .keep_all = TRUE) %>% 
   mutate(day = as.factor(yday(datetime)),
          week = week(datetime),
-         month = as.factor(month(datetime)),
-         year = as.factor(year(datetime))) %>%
+         month = as.factor(month(datetime, label = TRUE)),
+         year = as.factor(year(datetime)),
+         monthday = as.factor(mday(datetime))) %>%
   filter(year != 2020) %>% 
-  group_by(site, day, week, month, year) %>% 
+  group_by(site, day, week, monthday, month, year) %>% 
   summarise(ppt_measure = max(pptmm)) %>% 
   arrange(site , year, month, week, day)
 
@@ -85,7 +86,7 @@ ppt_comp_all <- ppt_comp %>%
   arrange(site, year, month, week, day)
 
 ppt_summary <- ppt_comp_all %>% 
-  group_by(day, week, month, year) %>% 
+  group_by(day, week, monthday, month, year) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
   mutate(ppt_in = ppt/100,
          ppt_mm = ppt*0.254) %>% 
@@ -94,7 +95,7 @@ ppt_summary <- ppt_comp_all %>%
   dplyr::select(-id)
 
 ppt_summary_site <- ppt_comp_all %>% 
-  group_by(day, week, month, year, site) %>% 
+  group_by(day, week, monthday, month, year, site) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
   mutate(ppt_in = ppt/100,
          ppt_mm = ppt*0.254) %>% 
@@ -103,7 +104,7 @@ ppt_summary_site <- ppt_comp_all %>%
   dplyr::select(-id) 
 
 ppt_start <-  ppt_comp_all %>% 
-  group_by(day, week, month, year) %>% 
+  group_by(day, week, monthday, month, year) %>% 
   summarise(ppt = mean(ppt_diff)) %>% 
   mutate(ppt_in = ppt/100,
          ppt_mm = ppt*0.254) %>%
@@ -127,7 +128,7 @@ ppt_all_fig <- ppt_final %>%
   ggplot(aes(x = week, y = ppt_mm, fill = year)) +
   geom_col() +
   #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
-  scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
+  scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
   scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.01,0)) +
   #xlim(0,52)+
@@ -261,7 +262,7 @@ site_env_all_fig <- ppt_final %>%
               se = FALSE,
               data = temp_summary) +
   scale_color_discrete(guide = guide_legend(label = FALSE)) +
-  scale_fill_manual(values = c("#0099FF", "#0066FF", "#0033FF")) +
+  scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
   scale_x_continuous(breaks = seq(1, 52, 3),
                      expand = c(0,0)) +
   scale_y_continuous(name = "Precipitation (mm)",
@@ -320,8 +321,11 @@ site_env_monsoon_temp <- temp_summary %>%
 
 site_env_monsoon_fig <- site_env_monsoon_ppt %>% 
   group_by(day, year) %>% 
-  ggplot(aes(x = day)) +
-  geom_col(aes(y = ppt_mm, fill = year)) +
+  mutate(label = paste(month, monthday, sep = "-"),
+    monthday = as.integer(monthday),
+    label = as.factor(label)) %>% 
+  ggplot(aes(x = label)) +
+  geom_col(aes(y = ppt_mm, fill = year), color = "black") +
   # geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   # geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
   #             size = 1.5,
@@ -333,8 +337,10 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   #             size = 1.5,
   #             span = 0.5,
   #             se = FALSE) +
-  scale_fill_manual(values = c("#0099FF", "#0033FF" , "#0066FF")) +
-  scale_x_continuous(breaks = seq(166, 273, 5), expand = c(0,0)) +
+  scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
+  scale_x_discrete(breaks = c("Jun-15", "Jun-25", "Jul-5", "Jul-15", "Jul-25",
+                              "Aug-5", "Aug-15", "Aug-25", "Sep-5", "Sep-15",
+                              "Sep-25")) +
   scale_y_continuous(name = "Precipitation (mm)",
                      breaks = seq(0, 150, 10),
                      expand = c(0.01,0)) +
@@ -342,10 +348,10 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
                      #                     name = "Mean Temperature (°C)",
                      #                     breaks = seq(0, 40, 10)),
                      # expand = c(0.0,0)) +
-  labs(x = "Day of Year",
+  labs(x = "Month - Day",
        fill = "Precipitation",
        color = "Temperature") +
-  facet_wrap(~year) +
+  facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "bottom", margin = T, x.text.angle = 45) +
   theme(axis.title.y = element_text(hjust = 0.4, vjust = 1)) +
   labs_pubr()

@@ -62,3 +62,62 @@ rod_tbl_season <- rod_year %>%
   tab_header(title = "Small Mammal Surveys") %>% 
   cols_label(count = "New Captures",
              genus = "Genera")
+
+# Survival vs small mammals
+seedlings_obs <- vroom("Data/seedlings_obs.csv",
+                       col_types = c(.default = "f",
+                                     ObsID = "i",
+                                     date = "D",
+                                     survival = "i",
+                                     died = "i",
+                                     tot_germination = "i",
+                                     herb_lived = "i",
+                                     herb_died = "i",
+                                     tot_herbivory = "i",
+                                     granivory = "i",
+                                     res_surv = "d",
+                                     sim_surv = "d",
+                                     sim_fit_surv = "d",
+                                     pred_surv = "d"))
+str(seedlings_obs)
+glimpse(seedlings_obs)
+
+# create data set for raw survival data
+tot_surv_yr <- seedlings_obs %>% 
+  group_by(precip, cohort) %>% 
+  summarise(mean_surv = mean(survival),
+            sd_surv = sd(survival),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+tot_surv_yr
+
+rod_grouped <- rod_year %>%
+  group_by(year) %>% 
+  summarise(rod_count = sum(count))
+
+sm_surv <- cbind(rod_grouped, tot_surv_yr)
+
+# mean survival vs trapped small mammals for each year
+sm_surv_fig <- sm_surv %>% 
+  ggplot(mapping = aes(x = rod_count, y = 10*mean_surv)) +
+  geom_point(mapping = aes(color = year), size = 5) +
+  geom_smooth(method = "glm", formula = y~log(x), se = T, color = "black") +
+  scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) + # blue gets darker for the most monsoon rainfall
+  labs(y = "Mean Survival (%)",
+       x = "Trapped Small Mammals",
+       color = "Year") +
+  labs_pubr() +
+  theme_pubr(legend = c("right"))
+
+sm_surv_fig
+
+ggsave(filename = "Figures_Tables/line_sm_surv.tiff",
+       plot = sm_surv_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")

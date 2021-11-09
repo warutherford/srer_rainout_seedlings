@@ -38,7 +38,8 @@ summary(ants_new)
 # look at summary of all ants (no genus) by clip and ppt treatments
 ants_total <- ants_new %>%
   group_by(year, tx, clip) %>% 
-  summarise(total = sum(total))
+  summarise(total = sum(total)) %>% 
+  rename(precip = tx)
 
 # compare clip treatment number of ants
 ants_total %>% 
@@ -73,9 +74,92 @@ summary(aov(log(total)~year*tx*clip, data = ants_new)) #not sig
 
 #write.csv(ants_new_tx, file = "Data/ants_by_year_tx.csv")
 
-ants_new %>% 
-  select(year, total, tx) %>% 
-  group_by(year, tx) %>% 
-  summarise(total_tx = sum(total),
-            # for se, 3 ppt x 3 years
-            se = (sd(total)/sqrt(9)))
+# Survival vs ants
+seedlings_obs <- vroom("Data/seedlings_obs.csv",
+                       col_types = c(.default = "f",
+                                     ObsID = "i",
+                                     date = "D",
+                                     survival = "i",
+                                     died = "i",
+                                     tot_germination = "i",
+                                     herb_lived = "i",
+                                     herb_died = "i",
+                                     tot_herbivory = "i",
+                                     granivory = "i",
+                                     res_surv = "d",
+                                     sim_surv = "d",
+                                     sim_fit_surv = "d",
+                                     pred_surv = "d"))
+str(seedlings_obs)
+glimpse(seedlings_obs)
+
+# create data set for survival vs ants fig
+tot_surv_yr <- seedlings_obs %>% 
+  mutate(year = recode(cohort,
+                "1" = "2017",
+                "2" = "2018",
+                "3" = "2019"),
+         precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = F)) %>% 
+  group_by(precip, clip, year) %>% 
+  summarise(mean_surv = mean(survival),
+            sd_surv = sd(survival),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+tot_surv_yr
+
+ants_total
+
+surv_ants <- inner_join(tot_surv_yr, ants_total)
+
+surv_ants
+
+# create fig
+hist(surv_ants$total)
+hist((surv_ants$mean_surv))
+
+surv_ants_fig <- surv_ants %>% 
+  ggplot(mapping = aes(x = total, y = (10*mean_surv), color = precip))+
+  geom_point(size = 3)+
+  scale_color_manual(values = c("grey30","blue1","#ba7525")) +
+  geom_smooth(method = "lm", formula = y ~ (x), se = F, size = 2)+
+  labs(y = "Mean Survival (%)",
+       x = "Total Ants Trapped",
+       color = "PPTx") +
+  labs_pubr() +
+  theme_pubr(legend = c("right"))
+
+surv_ants_fig
+
+ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
+       plot = surv_ants_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# get slopes of each line
+summary(lm(10*mean_surv~total+precip, data = surv_ants))
+
+wet <- surv_ants %>% 
+  filter(precip == "Wet")
+
+summary(lm(10*mean_surv~total, data = wet))
+
+ambient <- surv_ants %>% 
+  filter(precip == "Ambient")
+
+summary(lm(10*mean_surv~total, data = ambient))
+
+drought <- surv_ants %>% 
+  filter(precip == "Drought")
+
+summary(lm(10*mean_surv~total, data = drought))
+
+

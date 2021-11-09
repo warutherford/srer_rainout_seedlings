@@ -337,7 +337,7 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   #             size = 1.5,
   #             span = 0.5,
   #             se = FALSE) +
-  scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
+  scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) +
   scale_x_discrete(breaks = c("Jun-15", "Jun-25", "Jul-5", "Jul-15", "Jul-25",
                               "Aug-5", "Aug-15", "Aug-25", "Sep-5", "Sep-15",
                               "Sep-25")) +
@@ -352,7 +352,7 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
        fill = "Precipitation",
        color = "Temperature") +
   facet_wrap(~year, strip.position = c("bottom")) +
-  theme_pubr(legend = "bottom", margin = T, x.text.angle = 45) +
+  theme_pubr(legend = "top", margin = T, x.text.angle = 45) +
   theme(axis.title.y = element_text(hjust = 0.4, vjust = 1)) +
   labs_pubr()
         # axis.title.y.right = element_text(hjust = 0.9,

@@ -125,14 +125,15 @@ hist((surv_ants$mean_surv))
 
 surv_ants_fig <- surv_ants %>% 
   ggplot(mapping = aes(x = total, y = (10*mean_surv), color = precip))+
-  geom_point(size = 3)+
+  geom_point(size = 5)+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "lm", formula = y ~ (x), se = F, size = 2)+
   labs(y = "Mean Survival (%)",
-       x = "Total Ants Trapped",
+       x = "Trapped",
        color = "PPTx") +
-  labs_pubr() +
-  theme_pubr(legend = c("right"))
+  xlim(0, 1500) +
+  theme_pubr(legend = c("right"))+
+  labs_pubr(base_size = 24)
 
 surv_ants_fig
 

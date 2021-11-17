@@ -136,7 +136,7 @@ ggsave(filename = "Figures_Tables/bar_alltx_germ.tiff",
 
 # create data set for precip and clip
 tot_germ_pc <- seedlings_obs %>% 
-  group_by(precip, clip, cohort) %>% 
+  group_by(precip, clip) %>% 
   summarise(mean_germ = 100*mean(tot_germination/10),
             sd_germ = 100*sd(tot_germination/10),
             counts = n(),
@@ -154,12 +154,12 @@ bar_clip_germ_fig <- tot_germ_pc %>%
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
   scale_fill_manual(values = c("brown","darkorange")) +
   scale_x_discrete(labels = c("Clipped","Unclipped")) +
-  ylim(0, 80) +
+  scale_y_continuous(limits = c(0, 70), breaks = seq(0, 70, 10)) +
   labs(y = "Mean Germination (%)",
-       x = "Grazing Treatment") +
+       x = "") +
   theme_pubr(legend = "none") +
-  facet_wrap(~precip+cohort)+
-  labs_pubr()
+  facet_wrap(~precip)+
+  labs_pubr(base_size = 24)
 
 bar_clip_germ_fig
 
@@ -228,4 +228,105 @@ precip_cont_df %>%
 precip_cont_df %>% 
   ggplot(aes(x = precip_cont, y = 10*tot_germination, color = excl, group = excl)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))
+
+
+### if want to look at effects treating monsoon precip as continuous
+precip_cont_df_1 <- seedlings_obs_germ %>% 
+ group_by(cohort) %>%
+  filter(cohort == "1") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "280",
+                                     "IR" = "462",
+                                     "RO" = "98")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_df_2 <-seedlings_obs_germ %>% 
+  group_by(cohort) %>%
+  filter(cohort == "2") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "330",
+                                     "IR" = "545",
+                                     "RO" = "115")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_df_3 <-seedlings_obs_germ %>% 
+  group_by(cohort) %>%
+  filter(cohort == "3") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "292",
+                                     "IR" = "482",
+                                     "RO" = "102")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_df <- rbind(precip_cont_df_1, precip_cont_df_2, precip_cont_df_3)
+
+# predicted germination clip vs unclip across exclusion treatments
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_pred_germ = 100*mean(pred_germ)) %>% #convert germination to a percentage
+  ggplot(aes(x = precip_cont, y = mean_pred_germ, color = clip, group = clip)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Mean Predicted Germination (%)",
+       x = "Precipitation (mm)",
+       color = "Grazing") +
+  labs_pubr() +
+  facet_wrap(~excl, nrow = 1)
+
+# predicted germination only exclusion txs
+precip_cont_df %>% 
+  ggplot(aes(x = precip_cont, y = 100*(pred_germ), color = excl, group = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Predicted Germination (%)",
+       x = "Precipitation (mm)",
+       color = "Excl")+
+  labs_pubr()+
+  theme_pubr()
+
+# predicted survival only PPT
+pred_germ_cont <- precip_cont_df %>% 
+  ggplot(aes(x = precip_cont, y = 100*(pred_germ))) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Predicted Germination (%)",
+       x = "Precipitation (mm)") +
+  labs_pubr()+
+  theme_pubr()
+
+pred_germ_cont
+
+ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
+       plot = pred_surv_cont,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# obs clip vs unclip across exclusion treatments
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_germ = 100*mean(germination/10)) %>% #convert survival to a percentage
+  ggplot(aes(x = precip_cont, y = mean_germ, color = clip, group = clip)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Mean Germination (%)",
+       x = "Precipitation (mm)",
+       color = "Grazing") +
+  labs_pubr() +
+  facet_wrap(~excl, nrow = 1)+
+  theme_pubr()
+
+# only exclusion txs
+precip_cont_df %>%
+  group_by(precip_cont, precip, clip, excl) %>% 
+  summarise(mean_germ = 100*mean(germ/10)) %>% #convert survival to a percentage
+  ggplot(aes(x = precip_cont, y = mean_germ, color = excl, group = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x))+
+  labs(y = "Mean Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  labs_pubr() +
+  theme_pubr()
+
+
+describeBy(seedlings_obs, group = "excl")
+
 

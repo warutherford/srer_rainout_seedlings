@@ -354,7 +354,7 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "top", margin = T, x.text.angle = 45) +
   theme(axis.title.y = element_text(hjust = 0.4, vjust = 1)) +
-  labs_pubr()
+  labs_pubr(base_size = 24)
         # axis.title.y.right = element_text(hjust = 0.9,
         #                                   vjust = 1,
         #                                   size = 10))
@@ -633,9 +633,10 @@ summary(sm_clean)
 sm_parse <- sm_clean %>%
   mutate(day = yday(datetime),
          week = week(datetime),
-         month = as.factor(month(datetime)),
-         year = as.factor(year(datetime))) %>% 
-  group_by(precip, clip, day, year) %>% 
+         month = as.factor(month(datetime, label = T, abbr = T)),
+         year = as.factor(year(datetime)),
+         monthday = as.factor(mday(datetime))) %>% 
+  group_by(precip, clip, month, monthday, year) %>% 
   summarise(sm_mean = mean(moisture))
 
 sm_summary <- sm_parse %>% 
@@ -644,21 +645,26 @@ sm_summary <- sm_parse %>%
   summarise(sm_mean_year = mean(sm_mean))
 
 sm_fig <- sm_parse %>% 
-  group_by(precip, clip) %>% 
+  group_by(precip, clip, month, monthday, year) %>% 
   filter(year != 2017 & year != 2020) %>% 
-  ggplot(aes(x = day, y = 100*sm_mean, color = precip, group = precip)) +
+  mutate(label = paste(month, monthday, sep = "-"),
+         monthday = as.integer(monthday),
+         label = as.factor(label)) %>% 
+  ggplot(aes(x = label, y = 100*sm_mean, color = precip, group = precip)) +
   geom_smooth(span = 0.25, se = TRUE, size = 2) +
   geom_hline(data = sm_summary, aes(yintercept = 100*sm_mean_year, color = precip),
              size = 1, linetype = 2) +
   scale_color_manual(values = c("grey30", "blue1", "#ba7525"),
                      labels = c("Ambient", "Wet", "Drought")) +
-  scale_x_continuous(breaks=seq(0, 365, 50)) +
+  scale_x_discrete(breaks = c("Jan-1", "Feb-1", "Mar-1", "Apr-1", "May-1",
+                              "Jun-1", "Jul-1", "Aug-1", "Sep-1", "Oct-1",
+                              "Nov-1", "Dec-1")) +
   labs(y = "Volumetric Water Content (%)",
-       x = "Julian Date",
+       x = "Month - Day",
        color = "Precipitation") +
   facet_wrap(~clip, scales = "free_x", ncol=2) +
-  theme_pubr(legend = "bottom", margin = TRUE) +
-  labs_pubr()
+  theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
+  labs_pubr(base_size = 24)
 
 sm_fig
 

@@ -102,15 +102,21 @@ sm_surv <- cbind(rod_grouped, tot_surv_yr)
 
 # mean survival vs trapped small mammals for each year
 sm_surv_fig <- sm_surv %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = rod_count, y = 10*mean_surv)) +
-  geom_point(mapping = aes(color = year), size = 5) +
+  geom_point(mapping = aes(color = year, shape = precip), size = 10) +
   geom_smooth(method = "glm", formula = y~log(x), se = T, color = "black") +
   scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) + # blue gets darker for the most monsoon rainfall
   labs(y = "Mean Survival (%)",
-       x = "Trapped Small Mammals",
-       color = "Year") +
-  labs_pubr() +
-  theme_pubr(legend = c("right"))
+       x = "Trapped",
+       color = "Year",
+       shape = "PPTx") +
+  xlim(0, 250)+
+  theme_pubr(legend = c("right"))+
+  labs_pubr(base_size = 24) 
 
 sm_surv_fig
 

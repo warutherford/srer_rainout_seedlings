@@ -237,7 +237,7 @@ bar_pce_fig <- tot_surv_pce %>%
        x = "PPTx") +
   theme_pubr(legend = "none") +
   facet_grid(cols = vars(clip), rows = vars(excl)) +
-  labs_pubr()
+  labs_pubr(base_size = 24)
 
 bar_pce_fig
 
@@ -252,7 +252,7 @@ ggsave(filename = "Figures_Tables/bar_alltx_surv.tiff",
 
 # create data set for precip and clip
 tot_surv_pc <- seedlings_obs %>% 
-  group_by(precip, clip, cohort) %>% 
+  group_by(precip, clip) %>% 
   summarise(mean_surv = 100*mean(survival/10),
             sd_surv = 100*sd(survival/10),
             counts = n(),
@@ -270,12 +270,12 @@ bar_clip_fig <- tot_surv_pc %>%
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
   scale_fill_manual(values = c("brown","darkorange")) +
   scale_x_discrete(labels = c("Clipped","Unclipped")) +
-  ylim(0, 40) +
+  ylim(0, 30) +
   labs(y = "Mean Survival (%)",
-       x = "Grazing Treatment") +
+       x = "") +
   theme_pubr(legend = "none") +
-  facet_wrap(~precip+cohort)+
-  labs_pubr()
+  facet_wrap(~precip)+
+  labs_pubr(base_size = 24)
 
 bar_clip_fig
 
@@ -288,18 +288,39 @@ ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        compression = "lzw")
 
 
-# if want to look at effects treating precip as continuous
-precip_cont_df <- seedlings_obs %>% 
-  ungroup() %>% 
+# if want to look at effects treating monsoon precip as continuous
+precip_cont_surv_df_1 <- seedlings_obs %>% 
+  group_by(cohort) %>%
+  filter(cohort == "1") %>% 
   mutate(precip_cont = dplyr::recode(precip,
-                                     "Control" = "100",
-                                     "IR" = "165",
-                                     "RO" = "35")) %>% 
+                                     "Control" = "280",
+                                     "IR" = "462",
+                                     "RO" = "98")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_surv_df_2 <-seedlings_obs %>% 
+  group_by(cohort) %>%
+  filter(cohort == "2") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "330",
+                                     "IR" = "545",
+                                     "RO" = "115")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_surv_df_3 <-seedlings_obs %>% 
+  group_by(cohort) %>%
+  filter(cohort == "3") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "292",
+                                     "IR" = "482",
+                                     "RO" = "102")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_surv_df <- rbind(precip_cont_df_1, precip_cont_df_2, precip_cont_df_3)
 
 
 # predicted survival clip vs unclip across exclusion treatments
-precip_cont_df %>%
+precip_cont_surv_df %>%
   group_by(precip_cont, precip, clip, excl) %>% 
   summarise(mean_pred_surv = 100*mean(pred_surv/10)) %>% #convert survival to a percentage
   ggplot(aes(x = precip_cont, y = mean_pred_surv, color = clip, group = clip)) + 
@@ -311,7 +332,7 @@ precip_cont_df %>%
   facet_wrap(~excl, nrow = 1)
 
 # predicted survival only exclusion txs
-precip_cont_df %>% 
+precip_cont_surv_df %>% 
   ggplot(aes(x = precip_cont, y = 100*(pred_surv/10), color = excl, group = excl)) + 
   geom_smooth(method = "glm", formula = y ~ log(x))+
   labs(y = "Predicted Survival (%)",
@@ -321,13 +342,15 @@ precip_cont_df %>%
   theme_pubr()
 
 # predicted survival only PPT
-pred_surv_cont <- precip_cont_df %>% 
+pred_surv_cont <- precip_cont_surv_df %>% 
   ggplot(aes(x = precip_cont, y = 100*(pred_surv/10))) + 
   geom_smooth(method = "glm", formula = y ~ log(x))+
   labs(y = "Predicted Survival (%)",
        x = "Precipitation (mm)")+
   labs_pubr()+
   theme_pubr()
+
+pred_surv_cont
 
 ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
        plot = pred_surv_cont,
@@ -338,7 +361,7 @@ ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
        compression = "lzw")
 
 # obs clip vs unclip across exclusion treatments
-precip_cont_df %>%
+precip_cont_surv_df %>%
   group_by(precip_cont, precip, clip, excl) %>% 
   summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
   ggplot(aes(x = precip_cont, y = mean_surv, color = clip, group = clip)) + 
@@ -351,7 +374,7 @@ precip_cont_df %>%
   theme_pubr()
 
 # only exclusion txs
-precip_cont_df %>%
+precip_cont_surv_df %>%
   group_by(precip_cont, precip, clip, excl) %>% 
   summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
   ggplot(aes(x = precip_cont, y = mean_surv, color = excl, group = excl)) + 

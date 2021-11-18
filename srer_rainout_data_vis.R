@@ -316,7 +316,7 @@ precip_cont_surv_df_3 <-seedlings_obs %>%
                                      "RO" = "102")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-precip_cont_surv_df <- rbind(precip_cont_df_1, precip_cont_df_2, precip_cont_df_3)
+precip_cont_surv_df <- rbind(precip_cont_surv_df_1, precip_cont_surv_df_2, precip_cont_surv_df_3)
 
 
 # predicted survival clip vs unclip across exclusion treatments
@@ -342,13 +342,14 @@ precip_cont_surv_df %>%
   theme_pubr()
 
 # predicted survival only PPT
-pred_surv_cont <- precip_cont_surv_df %>% 
-  ggplot(aes(x = precip_cont, y = 100*(pred_surv/10))) + 
+pred_surv_cont <- precip_cont_surv_df %>%
+  ggplot(aes(x = precip_cont, y = (pred_surv))) +
+  geom_point()+
   geom_smooth(method = "glm", formula = y ~ log(x))+
   labs(y = "Predicted Survival (%)",
        x = "Precipitation (mm)")+
-  labs_pubr()+
-  theme_pubr()
+  theme_pubr()+
+  labs_pubr(base_size = 24)
 
 pred_surv_cont
 

@@ -194,7 +194,7 @@ testGeneric(seedlings.best.simres.germ, summary = spread) # yes, does not sig de
 plotResiduals(seedlings.best.simres.germ, seedlings_obs$precip, quantreg = T) # no strange residual patterns
 
 # save model predicted responses as a new column
-seedlings_obs_germ$pred_germ <- predict(best.model.germ, type = "response")
+seedlings_obs_germ$pred_germ <- predict(best.model.germ, type = "response", se.fit = TRUE)
 
 # look histograms of model predicted tot_germination and original tot_germination data 
 hist(seedlings_obs_germ$pred_germ)

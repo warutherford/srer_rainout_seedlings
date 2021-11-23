@@ -344,14 +344,34 @@ precip_cont_surv_df %>%
 # predicted survival only PPT
 pred_surv_cont <- precip_cont_surv_df %>%
   ggplot(aes(x = precip_cont, y = (pred_surv))) +
-  geom_point()+
-  geom_smooth(method = "glm", formula = y ~ log(x))+
+  geom_smooth(method = "glm", formula = y ~ log(x) + x)+
   labs(y = "Predicted Survival (%)",
        x = "Precipitation (mm)")+
   theme_pubr()+
   labs_pubr(base_size = 24)
 
 pred_surv_cont
+
+
+precip_cont_surv_df %>% 
+  group_by(precip_cont, clip, excl) %>% 
+  summarise(mean_pred_surv = mean(pred_surv),
+            sd_surv = sd(pred_surv),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_pred_surv + se_surv,
+         lower = mean_pred_surv - se_surv) %>% 
+  ggplot(aes(x = precip_cont, y = 100*(mean_pred_surv))) + 
+  #geom_point() +
+  geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
+  labs(y = "Predicted Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion Treatment") +
+  scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600), limits = c(0, 600))+
+  ylim(0, 100) +
+  theme_pubr()+
+  labs_pubr()
 
 ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
        plot = pred_surv_cont,

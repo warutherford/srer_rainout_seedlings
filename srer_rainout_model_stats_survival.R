@@ -188,11 +188,11 @@ zi.srer.surv.full.sum
 # interactions not significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
 # model convergence issue with cohort and sample with temp autocorrelation
-# try neg binomial dist instead of poisson
+# neg binomial dist instead of poisson
 zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                             data = seedlings_obs,
                             ziformula = ~.,
-                            family = poisson)
+                            family = nbinom1())
 zi.srer.surv.pce.sum <- summary(zi.srer.surv.pce)
 zi.srer.surv.pce.sum
 

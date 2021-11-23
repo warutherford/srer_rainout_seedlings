@@ -83,7 +83,6 @@ zi.srer.germ.full.sum
 # interactions not significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
 # model convergence issue with cohort and sample with temp autocorrelation
-# try neg binomial dist instead of poisson
 zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                             data = seedlings_obs_germ,
                             family = binomial(link = "logit"))
@@ -112,12 +111,20 @@ zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohor
 zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
 zi.srer.germ.pe.int.sum
 
+# precipitation, clip, and precipitation and clip interaction fixed factors
+zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+                               data = seedlings_obs_germ,
+                               family = binomial(link = "logit"))
+zi.srer.germ.pc.int.sum <- summary(zi.srer.germ.pc.int)
+zi.srer.germ.pc.int.sum
+
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.germ.p,
                             zi.srer.germ.pe,
                             zi.srer.germ.pce,
                             zi.srer.germ.full,
                             zi.srer.germ.pe.int,
+                            zi.srer.germ.pc.int,
                             logLik = TRUE)
 
 aic.compare.final
@@ -194,7 +201,7 @@ testGeneric(seedlings.best.simres.germ, summary = spread) # yes, does not sig de
 plotResiduals(seedlings.best.simres.germ, seedlings_obs$precip, quantreg = T) # no strange residual patterns
 
 # save model predicted responses as a new column
-seedlings_obs_germ$pred_germ <- predict(best.model.germ, type = "response", se.fit = TRUE)
+seedlings_obs_germ$pred_germ <- predict(best.model.germ, type = "response")
 
 # look histograms of model predicted tot_germination and original tot_germination data 
 hist(seedlings_obs_germ$pred_germ)

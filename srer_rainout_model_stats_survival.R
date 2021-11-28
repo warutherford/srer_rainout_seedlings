@@ -221,12 +221,21 @@ zi.srer.surv.pe.int <- glmmTMB(survival ~ precip + precip/excl + (1|cohort) + (1
 zi.srer.surv.pe.int.sum <- summary(zi.srer.surv.pe.int)
 zi.srer.surv.pe.int.sum
 
+# precipitation, clip, and precipitation and clip interaction fixed factors
+zi.srer.surv.pc.int <- glmmTMB(survival ~ precip + precip/clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+                               data = seedlings_obs,
+                               ziformula = ~.,
+                               family = poisson)
+zi.srer.surv.pc.int.sum <- summary(zi.srer.surv.pc.int)
+zi.srer.surv.pc.int.sum
+
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.surv.p,
                             zi.srer.surv.pe,
                             zi.srer.surv.pce,
                             zi.srer.surv.full,
                             zi.srer.surv.pe.int,
+                            zi.srer.surv.pc.int,
                             logLik = TRUE)
 
 aic.compare.final

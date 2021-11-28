@@ -319,41 +319,8 @@ precip_cont_surv_df_3 <-seedlings_obs %>%
 precip_cont_surv_df <- rbind(precip_cont_surv_df_1, precip_cont_surv_df_2, precip_cont_surv_df_3)
 
 
-# predicted survival clip vs unclip across exclusion treatments
-precip_cont_surv_df %>%
-  group_by(precip_cont, precip, clip, excl) %>% 
-  summarise(mean_pred_surv = 100*mean(pred_surv/10)) %>% #convert survival to a percentage
-  ggplot(aes(x = precip_cont, y = mean_pred_surv, color = clip, group = clip)) + 
-  geom_smooth(method = "glm", formula = y ~ log(x))+
-  labs(y = "Mean Predicted Survival (%)",
-       x = "Precipitation (mm)",
-       color = "Grazing") +
-  labs_pubr() +
-  facet_wrap(~excl, nrow = 1)
-
-# predicted survival only exclusion txs
-precip_cont_surv_df %>% 
-  ggplot(aes(x = precip_cont, y = 100*(pred_surv/10), color = excl, group = excl)) + 
-  geom_smooth(method = "glm", formula = y ~ log(x))+
-  labs(y = "Predicted Survival (%)",
-       x = "Precipitation (mm)",
-       color = "Excl")+
-  labs_pubr()+
-  theme_pubr()
-
 # predicted survival only PPT
-pred_surv_cont <- precip_cont_surv_df %>%
-  ggplot(aes(x = precip_cont, y = (pred_surv))) +
-  geom_smooth(method = "glm", formula = y ~ log(x) + x)+
-  labs(y = "Predicted Survival (%)",
-       x = "Precipitation (mm)")+
-  theme_pubr()+
-  labs_pubr(base_size = 24)
-
-pred_surv_cont
-
-
-precip_cont_surv_df %>% 
+pred_surv_pt <- precip_cont_surv_df %>% 
   group_by(precip_cont, clip, excl) %>% 
   summarise(mean_pred_surv = mean(pred_surv),
             sd_surv = sd(pred_surv),
@@ -361,50 +328,30 @@ precip_cont_surv_df %>%
             se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_pred_surv + se_surv,
          lower = mean_pred_surv - se_surv) %>% 
-  ggplot(aes(x = precip_cont, y = 100*(mean_pred_surv))) + 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "Total Excl")) %>% 
+  ggplot(aes(x = precip_cont, y = 10*(mean_pred_surv))) + 
   #geom_point() +
-  geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +
+  geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
   labs(y = "Predicted Survival (%)",
        x = "Precipitation (mm)",
-       color = "Exclusion Treatment") +
-  scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500, 600), limits = c(0, 600))+
-  ylim(0, 100) +
-  theme_pubr()+
-  labs_pubr()
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 45) +
+  theme_pubr(legend = "right")+
+  labs_pubr(base_size = 24)
+
+pred_surv_pt
 
 ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
-       plot = pred_surv_cont,
+       plot = pred_surv_pt,
        dpi = 800,
        width = 22,
        height = 12,
        units = "in",
        compression = "lzw")
 
-# obs clip vs unclip across exclusion treatments
-precip_cont_surv_df %>%
-  group_by(precip_cont, precip, clip, excl) %>% 
-  summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
-  ggplot(aes(x = precip_cont, y = mean_surv, color = clip, group = clip)) + 
-  geom_smooth(method = "glm", formula = y ~ log(x))+
-  labs(y = "Mean Survival (%)",
-       x = "Precipitation (mm)",
-       color = "Grazing") +
-  labs_pubr() +
-  facet_wrap(~excl, nrow = 1)+
-  theme_pubr()
-
-# only exclusion txs
-precip_cont_surv_df %>%
-  group_by(precip_cont, precip, clip, excl) %>% 
-  summarise(mean_surv = 100*mean(survival/10)) %>% #convert survival to a percentage
-  ggplot(aes(x = precip_cont, y = mean_surv, color = excl, group = excl)) + 
-  geom_smooth(method = "glm", formula = y ~ log(x))+
-  labs(y = "Mean Survival (%)",
-       x = "Precipitation (mm)",
-       color = "Exclusion") +
-  labs_pubr() +
-  theme_pubr()
-
-
-describeBy(seedlings_obs, group = "excl")

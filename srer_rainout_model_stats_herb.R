@@ -63,8 +63,8 @@ hist(sqrt(seedlings_obs_herb$tot_herbivory)) # still zero-inflated
 # Based on AIC and Log Likelihood, and model convergence/overdispersion issues,
 # accounting for sample independence and each year plus temp 
 # are the main random factors to include in the models
-# (e.g, (1|cohort) + (1|sampID) + ar1(date + 0|cohort))
-# Thus, cohort, sample ID and temp autocorrelation are used in building final model
+# (e.g, (1|cohort) + (1|sampID) + ar1(date + 0|cohort)
+# Thus, cohort and sample ID
 # Keep same random factors as with survival model
 
 # test if tot_herbivory sig diff across all blocks?
@@ -78,7 +78,7 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.herb.full <- glmmTMB(tot_herbivory ~ precip/clip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.herb.full <- glmmTMB(tot_herbivory ~ precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs_herb,
                              family = binomial)
 zi.srer.herb.full.sum <- summary(zi.srer.herb.full)
@@ -87,8 +87,7 @@ zi.srer.herb.full.sum
 # interactions not significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
 # model convergence issue with cohort and sample with temp autocorrelation
-# try neg binomial dist instead of poisson
-zi.srer.herb.pce <- glmmTMB(tot_herbivory ~ precip + clip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.herb.pce <- glmmTMB(tot_herbivory ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                             data = seedlings_obs_herb,
                             family = binomial)
 zi.srer.herb.pce.sum <- summary(zi.srer.herb.pce)
@@ -96,31 +95,40 @@ zi.srer.herb.pce.sum
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
-zi.srer.herb.pe <- glmmTMB(tot_herbivory ~ precip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.herb.pe <- glmmTMB(tot_herbivory ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                            data = seedlings_obs_herb,
                            family = binomial)
 zi.srer.herb.pe.sum <- summary(zi.srer.herb.pe)
 zi.srer.herb.pe.sum
 
 # precipitation only fixed factor
-zi.srer.herb.p <- glmmTMB(tot_herbivory ~ precip + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.herb.p <- glmmTMB(tot_herbivory ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                           data = seedlings_obs_herb,
                           family = binomial)
 zi.srer.herb.p.sum <- summary(zi.srer.herb.p)
 zi.srer.herb.p.sum
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.herb.pe.int <- glmmTMB(tot_herbivory ~ precip + precip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.herb.pe.int <- glmmTMB(tot_herbivory ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs_herb,
                                family = binomial)
 zi.srer.herb.pe.int.sum <- summary(zi.srer.herb.pe.int)
 zi.srer.herb.pe.int.sum
+
+
+# precipitation, clip, and precipitation and clip interaction fixed factors
+zi.srer.herb.pc.int <- glmmTMB(tot_herbivory ~ precip + precip/clip+ (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+                               data = seedlings_obs_herb,
+                               family = binomial)
+zi.srer.herb.pc.int.sum <- summary(zi.srer.herb.pc.int)
+zi.srer.herb.pc.int.sum
 
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.herb.p,
                             zi.srer.herb.pe,
                             zi.srer.herb.pce,
                             zi.srer.herb.full,
+                            zi.srer.herb.pc.int,
                             zi.srer.herb.pe.int,
                             logLik = TRUE)
 
@@ -143,7 +151,7 @@ best.model.herb <- zi.srer.herb.final
 VarCorr(best.model.herb)
 
 # examine model residuals
-seedlings_obs_herb$res_herb <- residuals(best.model.herb, quantileFunction = qpois)
+seedlings_obs_herb$res_herb <- residuals(best.model.herb, quantileFunction = binomial)
 
 # examine histogram of model residuals
 hist(seedlings_obs_herb$res_herb) # look normal

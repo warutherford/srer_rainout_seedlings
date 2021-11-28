@@ -74,16 +74,16 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.germ.full <- glmmTMB(tot_germination ~ precip/clip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.full <- glmmTMB(tot_germination ~ precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs_germ,
                              family = binomial(link = "logit"))
 zi.srer.germ.full.sum <- summary(zi.srer.germ.full)
 zi.srer.germ.full.sum
 
-# interactions not significant and not informative, use each tx individually
+# interactions not all significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
 # model convergence issue with cohort and sample with temp autocorrelation
-zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                             data = seedlings_obs_germ,
                             family = binomial(link = "logit"))
 zi.srer.germ.pce.sum <- summary(zi.srer.germ.pce)
@@ -91,28 +91,28 @@ zi.srer.germ.pce.sum
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
-zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                            data = seedlings_obs_germ,
                            family = binomial(link = "logit"))
 zi.srer.germ.pe.sum <- summary(zi.srer.germ.pe)
 zi.srer.germ.pe.sum
 
 # precipitation only fixed factor
-zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                           data = seedlings_obs_germ,
                           family = binomial(link = "logit"))
 zi.srer.germ.p.sum <- summary(zi.srer.germ.p)
 zi.srer.germ.p.sum
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs_germ,
                                family = binomial(link = "logit"))
 zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
 zi.srer.germ.pe.int.sum
 
 # precipitation, clip, and precipitation and clip interaction fixed factors
-zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs_germ,
                                family = binomial(link = "logit"))
 zi.srer.germ.pc.int.sum <- summary(zi.srer.germ.pc.int)

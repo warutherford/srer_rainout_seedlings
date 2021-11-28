@@ -467,3 +467,70 @@ ggsave(filename = "Figures_Tables/change_herb_total_ppt.tiff",
        units = "in",
        compression = "lzw")
 
+# if want to look at effects treating monsoon precip as continuous
+precip_cont_herb_df_1 <- seedlings_obs_herb %>% 
+  group_by(cohort) %>%
+  filter(cohort == "1") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "280",
+                                     "IR" = "462",
+                                     "RO" = "98")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_herb_df_2 <- seedlings_obs_herb %>% 
+  group_by(cohort) %>%
+  filter(cohort == "2") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "330",
+                                     "IR" = "545",
+                                     "RO" = "115")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_herb_df_3 <- seedlings_obs_herb %>% 
+  group_by(cohort) %>%
+  filter(cohort == "3") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "292",
+                                     "IR" = "482",
+                                     "RO" = "102")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_herb_df <- rbind(precip_cont_herb_df_1, precip_cont_herb_df_2, precip_cont_herb_df_3)
+
+
+# predicted survival only PPT
+pred_herb_pt <- precip_cont_herb_df %>% 
+  group_by(precip_cont, clip, excl) %>% 
+  summarise(mean_pred_herb = mean(pred_herb),
+            sd_herb = sd(pred_herb),
+            counts = n(),
+            se_herb = (sd_herb/sqrt(counts))) %>%
+  mutate(upper = mean_pred_herb + se_herb,
+         lower = mean_pred_herb - se_herb) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "Total Excl")) %>% 
+  ggplot(aes(x = precip_cont, y = 100*(mean_pred_herb))) + 
+  #geom_point() +
+  geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
+  labs(y = "Predicted Herbivory (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  #ylim(0, 30) +
+  theme_pubr(legend = "right")+
+  labs_pubr(base_size = 24)
+
+pred_herb_pt
+
+ggsave(filename = "Figures_Tables/pred_herb_cont.tiff",
+       plot = pred_herb_pt,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+

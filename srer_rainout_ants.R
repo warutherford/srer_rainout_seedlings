@@ -9,6 +9,7 @@ library(tidyverse)
 library(vroom)
 library(gt)
 library(glue)
+library(ggpubr)
 
 # read in data
 ants <- vroom("Data/ants_combined.csv",
@@ -124,13 +125,14 @@ hist((surv_ants$mean_surv))
 
 surv_ants_fig <- surv_ants %>% 
   ggplot(mapping = aes(x = total, y = (10*mean_surv), color = precip))+
-  geom_point(size = 10)+
+  geom_point(size = 6)+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
-  geom_smooth(method = "lm", formula = y ~ (x), se = F, size = 2)+
+  geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Mean Survival (%)",
        x = "Trapped",
        color = "PPTx") +
   xlim(0, 1500) +
+  ylim(0, 40) +
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)
 
@@ -145,21 +147,29 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
        compression = "lzw")
 
 # get slopes of each line
-summary(lm(10*mean_surv~total+precip, data = surv_ants))
+# across all precip tx
+summary(lm(10*mean_surv~(total), data = surv_ants)) #r2 = 0.24
+summary(lm(10*mean_surv~log(total), data = surv_ants))# log improves fit, r2 = 0.29  
 
+# just wet tx
 wet <- surv_ants %>% 
   filter(precip == "Wet")
 
-summary(lm(10*mean_surv~total, data = wet))
+summary(lm(10*mean_surv~(total), data = wet)) # r2 = 0.40
+summary(lm(10*mean_surv~log(total), data = wet)) # log improves fit, r2 = 0.496
 
+# just ambient tx
 ambient <- surv_ants %>% 
   filter(precip == "Ambient")
 
-summary(lm(10*mean_surv~total, data = ambient))
+summary(lm(10*mean_surv~total, data = ambient)) # r2 = 0.302
+summary(lm(10*mean_surv~log(total), data = ambient)) # log improves fit, r2 = 0.304
 
+# just drought tx
 drought <- surv_ants %>% 
   filter(precip == "Drought")
 
-summary(lm(10*mean_surv~total, data = drought))
+summary(lm(10*mean_surv~total, data = drought)) # r2 = 0.18
+summary(lm(10*mean_surv~log(total), data = drought)) # log improves fit, r2 = 0.28
 
 

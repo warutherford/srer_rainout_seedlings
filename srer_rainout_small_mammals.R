@@ -44,25 +44,6 @@ rod_season <- rodents %>%
 
 #write.csv(rod_season, file = "Data/rodents_by_season.csv")
 
-# not grouping...why?
-rod_tbl_year <- rod_year %>% 
-  drop_na(genus) %>% 
-  gt(rowname_col = "Genera",
-     groupname_col = "year") %>%
-  summary_rows(groups = "year",
-               columns = vars(count),
-               fns = list(total = "sum")) %>% 
-  tab_header(title = "Small Mammal Surveys") %>% 
-  cols_label(count = "New Captures",
-             genus = "Genera") 
-
-rod_tbl_season <- rod_year %>% 
-  gt(rowname_col = "Genera",
-     groupname_col = c("year", "season")) %>%
-  tab_header(title = "Small Mammal Surveys") %>% 
-  cols_label(count = "New Captures",
-             genus = "Genera")
-
 # Survival vs small mammals
 seedlings_obs <- vroom("Data/seedlings_obs.csv",
                        col_types = c(.default = "f",
@@ -100,28 +81,53 @@ rod_grouped <- rod_year %>%
 
 sm_surv <- cbind(rod_grouped, tot_surv_yr)
 
-# mean survival vs trapped small mammals for each year
-sm_surv_fig <- sm_surv %>% 
+# lin reg vs log
+# across all precip tx
+summary(lm(10*mean_surv~(rod_count), data = sm_surv)) #r2 = 0.59
+summary(lm(10*mean_surv~log(rod_count), data = sm_surv))# log improves fit, r2 = 0.69  
+
+# mean survival vs trapped small mammals for each year and ppt?
+# sm_surv_fig <- sm_surv %>% 
+#   mutate(precip = recode_factor(precip,
+#                                 "Control" = "Ambient",
+#                                 "IR" = "Wet",
+#                                 "RO" = "Drought", .ordered = TRUE)) %>% 
+#   ggplot(mapping = aes(x = rod_count, y = 10*mean_surv)) +
+#   geom_point(mapping = aes(color = year, shape = precip), size = 10) +
+#   geom_smooth(method = "glm", formula = y~log(x), se = F, color = "black", size = 2) +
+#   scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) + # blue gets darker for the most monsoon rainfall
+#   labs(y = "Mean Survival (%)",
+#        x = "Trapped",
+#        color = "Year",
+#        shape = "PPTx") +
+#   xlim(0, 250)+
+#   ylim(0, 40)+
+#   theme_pubr(legend = c("right"))+
+#   labs_pubr(base_size = 24) 
+# 
+# sm_surv_fig
+
+sm_surv_fig_simple <- sm_surv %>% 
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
-  ggplot(mapping = aes(x = rod_count, y = 10*mean_surv)) +
-  geom_point(mapping = aes(color = year, shape = precip), size = 10) +
-  geom_smooth(method = "glm", formula = y~log(x), se = T, color = "black") +
-  scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) + # blue gets darker for the most monsoon rainfall
+  ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip))+
+  geom_point(size = 6)+
+  scale_color_manual(values = c("grey30","blue1","#ba7525")) +
+  geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Mean Survival (%)",
        x = "Trapped",
-       color = "Year",
-       shape = "PPTx") +
-  xlim(0, 250)+
+       color = "PPTx") +
+  xlim(0, 250) +
+  ylim(0, 40) +
   theme_pubr(legend = c("right"))+
-  labs_pubr(base_size = 24) 
+  labs_pubr(base_size = 24)
 
-sm_surv_fig
+sm_surv_fig_simple
 
 ggsave(filename = "Figures_Tables/line_sm_surv.tiff",
-       plot = sm_surv_fig,
+       plot = sm_surv_fig_simple,
        dpi = 800,
        width = 22,
        height = 12,

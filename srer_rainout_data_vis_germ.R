@@ -12,35 +12,20 @@ library(ggpubr)
 library(glmmTMB)
 library(dplyr)
 
-seedlings <- vroom("Data/seedlings_combined.csv",
+seedlings_obs_germ <- vroom("Data/seedlings_obs_germ.csv",
                    col_select = -c(1),
-                   col_types = c(.default = "f",
-                                 date = "D"))
-str(seedlings)
+                   col_types = c(.default = "d",
+                                 sampID = "f",
+                                 block = "f",
+                                 date = "D",
+                                 precip = "f",
+                                 clip = "f",
+                                 excl = "f",
+                                 side = "f",
+                                 rep = "f",
+                                 cohort = "f"))
+str(seedlings_obs_germ)
 
-# For germination data, either the seed germinated or it didn't
-seedlings_germ_full <- seedlings %>% 
-  group_by(block, precip, clip, excl, side, rep, date, cohort) %>%
-  count(fate) %>% 
-  pivot_wider(names_from = fate,
-              values_from = n,
-              values_fill = 0) %>% 
-  rename(no_germ = "0",
-         survival = "1",
-         died = "2") %>% 
-  mutate(tot_germination = (survival + died))
-
-# Create possible random factor variables and fix any data structures needed for modeling
-seedlings_obs_germ <- seedlings_germ_full %>% 
-  mutate(block = as.character(block),
-         precip = as.character(precip)) %>% 
-  unite("plotID",block:precip, sep = "_", remove = FALSE) %>%
-  unite("sampID", block:rep, sep = "_", remove = FALSE) %>% 
-  mutate(block = as.factor(block),
-         precip = as.factor(precip),
-         plotID = as.factor(plotID),
-         date = as.factor(date),
-         sampID = as.factor(sampID))
 
 # descriptive stats for each cohort 1-3
 describeBy(seedlings_obs_germ , group = "cohort")
@@ -70,32 +55,12 @@ tot_germ_fig <- seedlings_obs_germ %>%
 
 tot_germ_fig
 
-# Use summary data
-### Read in clean seedlings data with model outputs from "srer_rainout_stats_summarize"
-# seedlings_obs <- vroom("Data/seedlings_obs.csv",
-#                        col_types = c(.default = "f",
-#                                      ObsID = "i",
-#                                      date = "D",
-#                                      survival = "i",
-#                                      died = "i",
-#                                      tot_germination = "i",
-#                                      herb_lived = "i",
-#                                      herb_died = "i",
-#                                      tot_herbivory = "i",
-#                                      granivory = "i",
-#                                      res_surv = "d",
-#                                      sim_surv = "d",
-#                                      sim_fit_surv = "d",
-#                                      pred_surv = "d"))
-# str(seedlings_obs)
-# glimpse(seedlings_obs)
-
 
 # create data set for precip and excl and clip
-tot_germ_pce <- seedlings_obs %>% 
+tot_germ_pce <- seedlings_obs_germ %>% 
   group_by(precip, excl, clip) %>% 
-  summarise(mean_germ = 100*mean(tot_germination/10),
-            sd_germ = 100*sd(tot_germination/10),
+  summarise(mean_germ = 100*mean(tot_germination),
+            sd_germ = 100*sd(tot_germination),
             counts = n(),
             se_germ = (sd_germ/sqrt(counts))) %>%
   mutate(upper = mean_germ + se_germ,
@@ -135,10 +100,10 @@ ggsave(filename = "Figures_Tables/bar_alltx_germ.tiff",
 
 
 # create data set for precip and clip
-tot_germ_pc <- seedlings_obs %>% 
+tot_germ_pc <- seedlings_obs_germ %>% 
   group_by(precip, clip) %>% 
-  summarise(mean_germ = 100*mean(tot_germination/10),
-            sd_germ = 100*sd(tot_germination/10),
+  summarise(mean_germ = 100*mean(tot_germination),
+            sd_germ = 100*sd(tot_germination),
             counts = n(),
             se_germ = (sd_germ/sqrt(counts))) %>%
   mutate(upper = mean_germ + se_germ,
@@ -172,10 +137,10 @@ ggsave(filename = "Figures_Tables/bar_clip_germ.tiff",
        compression = "lzw")
 
 # create data set for clip
-tot_surv_c <- seedlings_obs %>% 
+tot_surv_c <- seedlings_obs_germ %>% 
   group_by(clip,cohort) %>% 
-  summarise(mean_germ = 100*mean(tot_germination/10),
-            sd_germ = 100*sd(tot_germination/10),
+  summarise(mean_germ = 100*mean(tot_germination),
+            sd_germ = 100*sd(tot_germination),
             counts = n(),
             se_germ = (sd_germ/sqrt(counts))) %>%
   mutate(upper = mean_germ + se_germ,
@@ -255,7 +220,7 @@ pred_germ_pt <- precip_cont_df %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
                               "Ants" = "Ants Excl",
-                              "Rodents" = "Rodents Excl",
+                              "Rodents" = "Small Mammals Excl",
                               "Total" = "Total Excl")) %>% 
   ggplot(aes(x = precip_cont, y = 100*(mean_pred_germ))) + 
   #geom_point() +
@@ -280,6 +245,6 @@ ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
        compression = "lzw")
 
 
-describeBy(seedlings_obs, group = "excl")
+describeBy(seedlings_obs_germ, group = "excl")
 
 

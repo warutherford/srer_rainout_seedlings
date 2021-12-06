@@ -512,13 +512,14 @@ pred_herb_pt <- precip_cont_herb_df %>%
                               "Ants" = "Ants Excl",
                               "Rodents" = "Rodents Excl",
                               "Total" = "Total Excl")) %>% 
-  ggplot(aes(x = precip_cont, y = 100*(mean_pred_herb))) + 
+  ggplot(aes(x = precip_cont, y = 100*(mean_pred_herb), group = clip, color = clip)) + 
   #geom_point() +
-  geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +
+  geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
   labs(y = "Predicted Herbivory (%)",
        x = "Precipitation (mm)",
-       color = "Exclusion") +
+       shape = "Exclusion",
+       color = "Clipping") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
   #ylim(0, 30) +
   theme_pubr(legend = "right")+
@@ -526,11 +527,11 @@ pred_herb_pt <- precip_cont_herb_df %>%
 
 pred_herb_pt
 
-ggsave(filename = "Figures_Tables/pred_herb_cont.tiff",
-       plot = pred_herb_pt,
-       dpi = 800,
-       width = 22,
-       height = 12,
-       units = "in",
-       compression = "lzw")
+# ggsave(filename = "Figures_Tables/pred_herb_cont.tiff",
+#        plot = pred_herb_pt,
+#        dpi = 800,
+#        width = 22,
+#        height = 12,
+#        units = "in",
+#        compression = "lzw")
 

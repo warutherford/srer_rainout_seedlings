@@ -646,7 +646,7 @@ sm_summary <- sm_parse %>%
 
 sm_fig <- sm_parse %>% 
   group_by(precip, clip, month, monthday, year) %>% 
-  filter(year != 2017 & year != 2020) %>% 
+  filter(year != 2020) %>% 
   mutate(label = paste(month, monthday, sep = "-"),
          monthday = as.integer(monthday),
          label = as.factor(label)) %>% 
@@ -662,7 +662,7 @@ sm_fig <- sm_parse %>%
   labs(y = "Volumetric Water Content (%)",
        x = "Month - Day",
        color = "Precipitation") +
-  facet_wrap(~clip, scales = "free_x", ncol=2) +
+  facet_wrap(~year, scales = "free_x", nrow=1) +
   theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 

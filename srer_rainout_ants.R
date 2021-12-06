@@ -38,8 +38,7 @@ summary(ants_new)
 # look at summary of all ants (no genus) by clip and ppt treatments
 ants_total <- ants_new %>%
   group_by(year, tx, clip) %>% 
-  summarise(total = sum(total)) %>% 
-  rename(precip = tx)
+  summarise(total = sum(total))
 
 # compare clip treatment number of ants
 ants_total %>% 
@@ -125,7 +124,7 @@ hist((surv_ants$mean_surv))
 
 surv_ants_fig <- surv_ants %>% 
   ggplot(mapping = aes(x = total, y = (10*mean_surv), color = precip))+
-  geom_point(size = 5)+
+  geom_point(size = 10)+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "lm", formula = y ~ (x), se = F, size = 2)+
   labs(y = "Mean Survival (%)",

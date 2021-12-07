@@ -608,8 +608,6 @@ ggsave(filename = "Figures_Tables/environment/surface_light.tiff",
 
 ### Soil Moisture 
 
-### NEED TO FINISH
-
 sm <- vroom("Data/site-env-data/soil-moisture/all_sm.csv",
                     col_types = c(datetime = "T",
                                   precip = "f",
@@ -622,7 +620,7 @@ str(sm)
 sm_clean <- sm %>% 
   dplyr::select(-ids) %>% 
   filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
-  distinct(datetime, precip, clip, .keep_all = TRUE) %>% 
+  distinct(datetime, precip, clip, .keep_all = T) %>% 
   mutate(moisture = replace(moisture, moisture < 0, NA)) %>%
   mutate(moisture = replace(moisture, moisture > 0.3, NA)) %>% 
   drop_na()
@@ -636,22 +634,22 @@ sm_parse <- sm_clean %>%
          month = as.factor(month(datetime, label = T, abbr = T)),
          year = as.factor(year(datetime)),
          monthday = as.factor(mday(datetime))) %>% 
-  group_by(precip, clip, month, monthday, year) %>% 
+  group_by(precip, month, monthday, year) %>% 
   summarise(sm_mean = mean(moisture))
 
 sm_summary <- sm_parse %>% 
   filter(year != 2017 & year != 2020) %>% 
-  group_by(precip, clip) %>% 
+  group_by(precip) %>% 
   summarise(sm_mean_year = mean(sm_mean))
 
 sm_fig <- sm_parse %>% 
-  group_by(precip, clip, month, monthday, year) %>% 
-  filter(year != 2020) %>% 
+  group_by(precip, month, monthday, year) %>% 
+  filter(year != 2017 & year != 2020) %>% 
   mutate(label = paste(month, monthday, sep = "-"),
          monthday = as.integer(monthday),
          label = as.factor(label)) %>% 
   ggplot(aes(x = label, y = 100*sm_mean, color = precip, group = precip)) +
-  geom_smooth(span = 0.25, se = TRUE, size = 2) +
+  geom_smooth(span = 0.25, se = F, size = 2) +
   geom_hline(data = sm_summary, aes(yintercept = 100*sm_mean_year, color = precip),
              size = 1, linetype = 2) +
   scale_color_manual(values = c("grey30", "blue1", "#ba7525"),
@@ -662,7 +660,6 @@ sm_fig <- sm_parse %>%
   labs(y = "Volumetric Water Content (%)",
        x = "Month - Day",
        color = "Precipitation") +
-  facet_wrap(~year, scales = "free_x", nrow=1) +
   theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 

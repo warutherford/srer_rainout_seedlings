@@ -249,6 +249,18 @@ ggsave(filename = "Figures_Tables/bar_alltx_surv.tiff",
        units = "in",
        compression = "lzw")
 
+# stats
+hist(tot_surv_pce$mean_surv)
+
+tot_mod <- (aov((10*survival)~precip+clip+excl, data = seedlings_obs))
+
+# post-hoc test of precip and exclusion 
+post.hoc.tot <- emmeans::emmeans(tot_mod, specs = ~precip*excl, by = "clip")
+post.hoc.tot
+
+# get lettering report on post-hoc test
+post.hoc.letters.tot <- cld(post.hoc.tot, Letters = letters, covar = T)
+post.hoc.letters.tot
 
 # create data set for precip and clip
 tot_surv_pc <- seedlings_obs %>% 
@@ -287,6 +299,16 @@ ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        units = "in",
        compression = "lzw")
 
+# stats
+tot_mod_clip <- (aov((survival/10)~precip+clip, data = seedlings_obs))
+
+# post-hoc test of precip and exclusion 
+post.hoc.tot.clip <- emmeans::emmeans(tot_mod_clip, specs = ~precip*clip)
+post.hoc.tot.clip
+
+# get lettering report on post-hoc test
+post.hoc.letters.tot.clip <- cld(post.hoc.tot.clip, Letters = letters, covar = T)
+post.hoc.letters.tot.clip
 
 # if want to look at effects treating monsoon precip as continuous
 precip_cont_surv_df_1 <- seedlings_obs %>% 

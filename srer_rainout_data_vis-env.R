@@ -6,6 +6,7 @@
 
 # Load packages
 library(tidyverse)
+library(agricolae)
 library(lubridate)
 library(forcats)
 library(vroom)
@@ -122,6 +123,18 @@ ppt_final %>%
   group_by(year) %>% 
   summarise(ppt_sum = sum(ppt_mm))
 
+# stats
+summary(glmmTMB(ppt_mm ~ year,
+        data = ppt_final,
+        ziformula = ~.,
+        family = poisson(link = "log")))
+
+ppt_clean <- ppt_final %>% filter(ppt_mm != 0)
+hist(log(ppt_clean$ppt_mm))
+ppt.aov <- aov(log(ppt_mm)~year, data = ppt_clean)
+summary(ppt.aov)
+ppt.aov.post <- HSD.test(ppt.aov, "year", group = FALSE, console = TRUE)
+
 # PPT figure all years
 ppt_all_fig <- ppt_final %>% 
   group_by(week, year) %>% 
@@ -137,7 +150,7 @@ ppt_all_fig <- ppt_final %>%
        fill = "Year") +
   facet_wrap(~year, scales = "free_x") +
   theme_pubr(legend = "bottom", margin = TRUE) +
-  labs_pubr()
+  labs_pubr(base_size = 24)
 
 ppt_all_fig
 
@@ -184,11 +197,6 @@ sum_2019_monsoon <- ppt_summary %>%
 
 monsoon_tot <- rbind(sum_2017_monsoon, sum_2018_monsoon, sum_2019_monsoon)
 
-# Sig difference between precipitation b/w years?
-hist(sqrt((log10(ppt_summary$ppt_mm))))
-lm(sqrt(log10(ppt_mm))~year, data = ppt_summary)
-summary(lm(sqrt(log10(ppt_mm))~year, data = ppt_summary)) # No
-
 
 ### SRER DESGR Air Temp
 temp <- vroom("Data/site-env-data/ppt-temp/all_air_ppt_temp.csv",
@@ -224,6 +232,13 @@ temp_summary <- temp_parse %>%
   group_by(day, week, month, year) %>% 
   summarise(site_temp = mean(tempC)) %>% 
   arrange(year, month, week, day)
+
+# stats
+hist(temp_summary$site_temp)
+temp.aov <- aov(site_temp~year, data = temp_summary)
+summary(temp.aov)
+temp.aov.post <- HSD.test(temp.aov, "year", group = FALSE, console = TRUE)
+# 2017 was statistically hotter than 2019, but not 2018
 
 temp_all_fig <- temp_summary %>% 
   group_by(week, year) %>% 
@@ -275,14 +290,14 @@ site_env_all_fig <- ppt_final %>%
        fill = "Precipitation",
        color = "Temperature") +
   facet_wrap(~year) +
-  theme_pubr(legend = "bottom", margin = TRUE) +
+  theme_pubr(legend = "bottom", margin = TRUE, x.text.angle = 45) +
   theme(axis.title.y = element_text(hjust = 0.4,
                                     vjust = 1,
                                     size = 14),
         axis.title.y.right = element_text(hjust = 0.95,
                                           vjust = 1,
                                           size = 14)) +
-  labs_pubr()
+  labs_pubr(base_size = 24)
   
 site_env_all_fig
 
@@ -299,6 +314,18 @@ site_env_monsoon_ppt <- ppt_final %>%
   mutate(day = as.integer(day)) %>% 
   filter(day >= 166 & day <= 273)
 
+# stats, zero-inflated
+summary(glmmTMB(ppt_mm ~ year,
+                data = site_env_monsoon_ppt,
+                ziformula = ~.,
+                family = poisson(link = "log")))
+
+hist(log(site_env_monsoon_ppt$ppt_mm))
+monsoon.aov <- aov(ppt_mm~year, data = site_env_monsoon_ppt)
+summary(monsoon.aov)
+monsoon.aov.post <- HSD.test(monsoon.aov, "year", group = FALSE, console = TRUE)
+
+# summary rain calcs
 site_env_monsoon_ppt %>% 
   group_by(year) %>% 
   summarise(sum_ppt = sum(ppt_mm))
@@ -427,16 +454,11 @@ stemp_series <- stemplight %>%
 # data normal?
 hist(stemp_series$dailyavg) # looks good
 
-below_anova <- aov(dailyavg ~ precip*clip*year, data = stemp_series)
+below_anova <- aov(dailyavg ~ precip+clip+year, data = stemp_series)
 
 summary(below_anova)
 
-post.hoc.below <- emmeans::emmeans(below_anova, specs = ~precip+year)
-post.hoc.below
-
-# get lettering report on post-hoc test
-post.hoc.letters.below <- cld(post.hoc.below, Letters = letters, covar = T)
-post.hoc.letters.below
+below.aov.post <- HSD.test(below_anova, "year", group = FALSE, console = TRUE)
 
 # figure of 5-cm soil temp time series
 below_soil_temp_fig <- stemp_series %>% 
@@ -452,7 +474,7 @@ below_soil_temp_fig <- stemp_series %>%
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
   theme_pubr(legend = "bottom") +
-  labs_pubr()
+  labs_pubr(base_size = 24)
 
 below_soil_temp_fig
 
@@ -495,7 +517,7 @@ atemp_aov <- aov(dailyavg ~ precip*clip*year, data = atemp_comp)
 
 summary(atemp_aov)
 
-post.hoc.surf <- emmeans::emmeans(atemp_aov, specs = ~precip+year)
+post.hoc.surf <- emmeans::emmeans(atemp_aov, specs = ~precip+clip)
 post.hoc.surf
 
 # get lettering report on post-hoc test
@@ -516,7 +538,7 @@ surface_temp_fig <- atemp_comp %>%
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
   theme_pubr(legend = "bottom") +
-  labs_pubr()
+  labs_pubr(base_size = 24)
 
 surface_temp_fig
 
@@ -566,9 +588,9 @@ light_comp <- full_join(light, light_fix) %>%
 
 # test sig diff of daily below ground soil temp between treatments
 # data normal?
-hist(light_series$dailyavg_light) # loods good
+hist(light_comp$dailyavg_light) # loods good
 
-light_anova <- aov(dailyavg_light ~ precip*clip*year, data = light_series)
+light_anova <- aov(dailyavg_light ~ precip+clip+year, data = light_comp)
 
 summary(light_anova)
 
@@ -594,7 +616,7 @@ light_fig <- light_comp %>%
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
   theme_pubr(legend = "bottom") +
-  labs_pubr()
+  labs_pubr(base_size = 24)
 
 light_fig
 
@@ -619,7 +641,7 @@ str(sm)
 
 sm_clean <- sm %>% 
   dplyr::select(-ids) %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2018-01-01 00:00:00') & datetime <= ymd_hms('2019-12-31 00:00:00')) %>% 
   distinct(datetime, precip, clip, .keep_all = T) %>% 
   mutate(moisture = replace(moisture, moisture < 0, NA)) %>%
   mutate(moisture = replace(moisture, moisture > 0.3, NA)) %>% 
@@ -628,6 +650,13 @@ sm_clean <- sm %>%
 glimpse(sm_clean)
 summary(sm_clean)
 
+# stats
+hist(sm_clean$moisture)
+sm.aov <- aov(moisture~precip, data = sm_clean)
+summary(sm.aov)
+sm.aov.post <- HSD.test(sm.aov, "precip", group = T, console = TRUE)
+
+# make sm fig
 sm_parse <- sm_clean %>%
   mutate(day = yday(datetime),
          week = week(datetime),
@@ -638,13 +667,11 @@ sm_parse <- sm_clean %>%
   summarise(sm_mean = mean(moisture))
 
 sm_summary <- sm_parse %>% 
-  filter(year != 2017 & year != 2020) %>% 
   group_by(precip) %>% 
   summarise(sm_mean_year = mean(sm_mean))
 
 sm_fig <- sm_parse %>% 
   group_by(precip, month, monthday, year) %>% 
-  filter(year != 2017 & year != 2020) %>% 
   mutate(label = paste(month, monthday, sep = "-"),
          monthday = as.integer(monthday),
          label = as.factor(label)) %>% 

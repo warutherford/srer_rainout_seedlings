@@ -170,7 +170,7 @@ aic.compare.random
 zi.block <- glmmTMB(survival ~ block + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                     data = seedlings_obs,
                     ziformula = ~.,
-                    family = poisson)
+                    family = poisson())
 zi.block.sum <- summary(zi.block)
 zi.block.sum
 
@@ -178,55 +178,73 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.surv.full <- glmmTMB(survival ~ precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl + clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs,
                              ziformula = ~.,
-                             family = poisson)
+                             family = poisson())
 zi.srer.surv.full.sum <- summary(zi.srer.surv.full)
 zi.srer.surv.full.sum
 
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.full)
+
 # interactions not significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
-# model convergence issue with cohort and sample with temp autocorrelation
+# poisson model convergence issue with cohort and sample with temp autocorrelation, use neg binomial
 zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                             data = seedlings_obs,
                             ziformula = ~.,
-                            family = poisson)
+                            family = nbinom1())
 zi.srer.surv.pce.sum <- summary(zi.srer.surv.pce)
 zi.srer.surv.pce.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.pce)
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
 zi.srer.surv.pe <- glmmTMB(survival ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                            data = seedlings_obs,
                            ziformula = ~.,
-                           family = poisson)
+                           family = poisson())
 zi.srer.surv.pe.sum <- summary(zi.srer.surv.pe)
 zi.srer.surv.pe.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.pe)
 
 # precipitation only fixed factor
 zi.srer.surv.p <- glmmTMB(survival ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs,
                              ziformula = ~.,
-                             family = poisson)
+                             family = poisson())
 zi.srer.surv.p.sum <- summary(zi.srer.surv.p)
 zi.srer.surv.p.sum
 
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.p)
+
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.surv.pe.int <- glmmTMB(survival ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.surv.pe.int <- glmmTMB(survival ~ block+precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs,
                                ziformula = ~.,
-                               family = poisson)
+                               family = poisson())
 zi.srer.surv.pe.int.sum <- summary(zi.srer.surv.pe.int)
 zi.srer.surv.pe.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.pe.int)
 
 # precipitation, clip, and precipitation and clip interaction fixed factors
 zi.srer.surv.pc.int <- glmmTMB(survival ~ precip + precip/clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs,
                                ziformula = ~.,
-                               family = poisson)
+                               family = poisson())
 zi.srer.surv.pc.int.sum <- summary(zi.srer.surv.pc.int)
 zi.srer.surv.pc.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.surv.pc.int)
 
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.surv.p,
@@ -246,7 +264,7 @@ anova(zi.srer.surv.pce, zi.srer.surv.pe) # yes
 zi.srer.surv.final <- glmmTMB(survival ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                         data = seedlings_obs,
                         ziformula = ~.,
-                        family = poisson)
+                        family = poisson())
 zi.srer.surv.final.sum <- summary(zi.srer.surv.final)
 zi.srer.surv.final.sum
 
@@ -319,14 +337,6 @@ hist(seedlings_obs$pred_surv)
 
 hist(seedlings_obs$survival)
 
-# post-hoc test of within precip treatment differences
-g.precip <- glht(best.model.surv, linfct = mcp(precip = "Tukey", interaction_average = T))
-summary(g.precip) # drought treatments sig different from control and wet
-
-# post-hoc test of within exclusion treatment differences
-g.excl <- glht(best.model.surv, linfct = mcp(excl = "Tukey", interaction_average = T))
-summary(g.excl) # total treatments sig different from control, ant and rodents not a big influence
-
 # another method for post-hoc test of precip and exclusion 
 post.hoc <- emmeans::emmeans(best.model.surv, specs = ~precip*excl)
 post.hoc
@@ -354,6 +364,12 @@ write.csv(seedlings_obs, file = "Data/seedlings_obs.csv", row.names = FALSE)
 # zi.srer.surv.pe.int.sum
 # aic.compare.final
 # zi.srer.surv.final
+# Anova(zi.srer.surv.full)
+# Anova(zi.srer.surv.pce)
+# Anova(zi.srer.surv.pe)
+# Anova(zi.srer.surv.p)
+# Anova(zi.srer.surv.pe.int)
+# Anova(zi.srer.surv.pc.int)
 # post.hoc
 # post.hoc.letters
 # 

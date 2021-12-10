@@ -74,11 +74,14 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.germ.full <- glmmTMB(tot_germination ~ precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.full <- glmmTMB(tot_germination ~ precip + precip/clip+ precip/excl + excl + clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs_germ,
                              family = binomial(link = "logit"))
 zi.srer.germ.full.sum <- summary(zi.srer.germ.full)
 zi.srer.germ.full.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.full)
 
 # interactions not all significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
@@ -89,6 +92,9 @@ zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) 
 zi.srer.germ.pce.sum <- summary(zi.srer.germ.pce)
 zi.srer.germ.pce.sum
 
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pce)
+
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
 zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
@@ -97,12 +103,18 @@ zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sam
 zi.srer.germ.pe.sum <- summary(zi.srer.germ.pe)
 zi.srer.germ.pe.sum
 
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pe)
+
 # precipitation only fixed factor
 zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                           data = seedlings_obs_germ,
                           family = binomial(link = "logit"))
 zi.srer.germ.p.sum <- summary(zi.srer.germ.p)
 zi.srer.germ.p.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.p)
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
 zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
@@ -111,12 +123,18 @@ zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohor
 zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
 zi.srer.germ.pe.int.sum
 
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pe.int)
+
 # precipitation, clip, and precipitation and clip interaction fixed factors
 zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs_germ,
                                family = binomial(link = "logit"))
 zi.srer.germ.pc.int.sum <- summary(zi.srer.germ.pc.int)
 zi.srer.germ.pc.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pc.int)
 
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.germ.p,
@@ -133,7 +151,7 @@ aic.compare.final
 anova(zi.srer.germ.pce, zi.srer.germ.pe) # not sig, but just pe is a more parsimonious model
 
 # final PRVE seedlings tot_germination model will precipitation and exclusion as only fixed factors
-zi.srer.germ.final <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.final <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                               data = seedlings_obs_germ,
                               family = binomial(link = "logit"))
 zi.srer.germ.final.sum <- summary(zi.srer.germ.final)
@@ -208,14 +226,6 @@ hist(seedlings_obs_germ$pred_germ)
 
 hist(seedlings_obs_germ$tot_germination)
 
-# post-hoc test of within precip treatment differences
-g.precip <- glht(best.model.germ, linfct = mcp(precip = "Tukey", interaction_average = T))
-summary(g.precip) # drought treatments sig different from control and wet
-
-# post-hoc test of within exclusion treatment differences
-g.excl <- glht(best.model.germ, linfct = mcp(excl = "Tukey", interaction_average = T))
-summary(g.excl) # total treatments sig different from control, ant and rodents not a big influence
-
 # another method for post-hoc test of precip and exclusion 
 post.hoc <- emmeans::emmeans(best.model.germ, specs = ~precip*excl)
 post.hoc
@@ -243,6 +253,12 @@ write.csv(seedlings_obs_germ, file = "Data/seedlings_obs_germ.csv", row.names = 
 # zi.srer.germ.pe.int.sum
 # aic.compare.final
 # zi.srer.germ.final
+# Anova(zi.srer.germ.full)
+# Anova(zi.srer.germ.pce)
+# Anova(zi.srer.germ.pe)
+# Anova(zi.srer.germ.p)
+# Anova(zi.srer.germ.pe.int)
+# Anova(zi.srer.germ.pc.int)
 # post.hoc
 # post.hoc.letters
 # 

@@ -198,6 +198,15 @@ tot_surv_summary <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
+tot_surv_summary_full <- seedlings_obs %>% 
+  group_by(precip, excl, clip) %>% 
+  summarise(mean_surv = 100*mean(survival/10),
+            sd_surv = 100*sd(survival/10),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
 tot_surv_summary_pcohort <- seedlings_obs %>% 
   group_by(precip, cohort) %>% 
   summarise(mean_surv = 100*mean(survival/10),

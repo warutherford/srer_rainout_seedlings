@@ -33,6 +33,18 @@ describeBy(seedlings_obs_germ , group = "cohort")
 # mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
 hist(seedlings_obs_germ$tot_germination)# binomial (0 or 1)
 
+# summary for germ by only precip
+tot_germ_p <- seedlings_obs_germ %>% 
+  group_by(precip) %>% 
+  summarise(mean_germ = 100*mean(tot_germination),
+            sd_germ = 100*sd(tot_germination),
+            counts = n(),
+            se_germ = (sd_germ/sqrt(counts))) %>%
+  mutate(upper = mean_germ + se_germ,
+         lower = mean_germ - se_germ)
+
+tot_germ_p
+
 ###
 ## Figures ##
 ###
@@ -137,7 +149,7 @@ ggsave(filename = "Figures_Tables/bar_clip_germ.tiff",
        compression = "lzw")
 
 # create data set for clip
-tot_surv_c <- seedlings_obs_germ %>% 
+tot_germ_c <- seedlings_obs_germ %>% 
   group_by(clip,cohort) %>% 
   summarise(mean_germ = 100*mean(tot_germination),
             sd_germ = 100*sd(tot_germination),
@@ -146,7 +158,7 @@ tot_surv_c <- seedlings_obs_germ %>%
   mutate(upper = mean_germ + se_germ,
          lower = mean_germ - se_germ)
 
-bar_cliponly_germ_fig <- tot_surv_c %>%
+bar_cliponly_germ_fig <- tot_germ_c %>%
   ggplot(mapping = aes(x = clip, y = mean_germ, fill = clip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +

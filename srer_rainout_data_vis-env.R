@@ -700,4 +700,59 @@ ggsave(filename = "Figures_Tables/environment/srer_desgr_sm_pptx.tiff",
        units = "in",
        compression = "lzw")
 
+### Rainout PAR measurements
+par <- vroom("Data/site-env-data/par/lqs-comp.csv",
+                  col_types = c(.default = "d",
+                                date = "D",
+                                block = "f",
+                                tx = "f",
+                                location = "f",
+                                clip = "f"))
+str(par)
+
+
+par_long <- par %>% 
+  pivot_longer(6:8, names_to = "transect", values_to = "value")
+
+par_calc <- par_long %>% 
+  group_by(date, block, tx, location, clip) %>% 
+  summarise(mean_read = mean(value))
+
+par_calc_above <- par_calc %>% 
+  filter(location == "Above")
+
+par_calc_below <- par_calc %>% 
+  filter(location == "Below" & tx != "RO-Above") 
+
+par_loc <- bind_cols(par_calc_above, par_calc_below, .name_repair = "unique") %>% 
+  select(1:6,10,12) %>% 
+  rename(date = date...1,
+         block = block...2,
+         precip = tx...3,
+         above = location...4,
+         clip = clip...5,
+         abv_read = mean_read...6,
+         below = location...10,
+         bel_read = mean_read...12)
+
+par_ratio <- par_loc %>%  group_by(date, block, precip, clip) %>% 
+  summarise(intercept_ratio = 1-(bel_read/abv_read))
+
+par_ratio %>% group_by(clip) %>% 
+  summarise(mean_inter = mean(intercept_ratio))
+
+hist(sqrt(par_ratio$intercept_ratio))
+
+par_long %>%
+  ggplot(mapping = aes(x = clip, y = value, fill = clip)) +
+  geom_violin() +
+  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("brown","forestgreen")) +
+  scale_x_discrete(labels = c("Clipped","Unclipped")) +
+  labs(y = "Intercepted Light (%)",
+       x = "Grazing Treatment") +
+  theme_pubr(legend = "none") +
+  facet_wrap(~tx)+
+  labs_pubr()
+
 

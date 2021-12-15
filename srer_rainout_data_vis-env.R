@@ -654,7 +654,7 @@ summary(sm_clean)
 hist(sm_clean$moisture)
 sm.aov <- aov(moisture~precip, data = sm_clean)
 summary(sm.aov)
-sm.aov.post <- HSD.test(sm.aov, "precip", group = T, console = TRUE)
+sm.aov.post <- HSD.test(sm.aov, "precip", group = F, console = TRUE)
 
 # make sm fig
 sm_parse <- sm_clean %>%
@@ -700,8 +700,8 @@ ggsave(filename = "Figures_Tables/environment/srer_desgr_sm_pptx.tiff",
        units = "in",
        compression = "lzw")
 
-### Rainout PAR measurements
-par <- vroom("Data/site-env-data/par/lqs-comp.csv",
+### Rainout PAR measurements with line quantum sensor
+par <- vroom("Data/site-env-data/par/rainout-lqs-complete.csv",
                   col_types = c(.default = "d",
                                 date = "D",
                                 block = "f",
@@ -710,14 +710,16 @@ par <- vroom("Data/site-env-data/par/lqs-comp.csv",
                                 clip = "f"))
 str(par)
 
-
+# convert from wide to long
 par_long <- par %>% 
   pivot_longer(6:8, names_to = "transect", values_to = "value")
 
+# calculate plot average
 par_calc <- par_long %>% 
   group_by(date, block, tx, location, clip) %>% 
   summarise(mean_read = mean(value))
 
+# separate above reads with below canopy ready to create ratio of intercepted light
 par_calc_above <- par_calc %>% 
   filter(location == "Above")
 
@@ -735,24 +737,57 @@ par_loc <- bind_cols(par_calc_above, par_calc_below, .name_repair = "unique") %>
          below = location...10,
          bel_read = mean_read...12)
 
-par_ratio <- par_loc %>%  group_by(date, block, precip, clip) %>% 
-  summarise(intercept_ratio = 1-(bel_read/abv_read))
+# calculate intercepted PAR ratio
+par_ratio <- par_loc %>%  mutate(intercept_ratio = 1-(bel_read/abv_read))
 
-par_ratio %>% group_by(clip) %>% 
+# look at summary of ratios
+par_ratio %>% group_by(precip, clip) %>% 
   summarise(mean_inter = mean(intercept_ratio))
 
-hist(sqrt(par_ratio$intercept_ratio))
-
-par_long %>%
-  ggplot(mapping = aes(x = clip, y = value, fill = clip)) +
+# create violin plot of distribution of measurements by ppt and clip
+par_fig <- par_ratio %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(mapping = aes(x = clip, y = 100*intercept_ratio, fill = clip)) +
   geom_violin() +
-  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("brown","forestgreen")) +
-  scale_x_discrete(labels = c("Clipped","Unclipped")) +
-  labs(y = "Intercepted Light (%)",
-       x = "Grazing Treatment") +
+  #geom_boxplot()+
+  scale_fill_manual(values = c("darkorange","forestgreen")) +
+  scale_x_discrete(labels = c("","")) +
+  labs(y = "Intercepted PAR (%)",
+       x = "") +
+  ylim(0,100)+
   theme_pubr(legend = "none") +
-  facet_wrap(~tx)+
-  labs_pubr()
+  facet_wrap(~precip)+
+  labs_pubr(base_size = 24)
 
+par_fig
+
+# save plot
+ggsave(filename = "Figures_Tables/environment/lqs_par.tiff",
+       plot = par_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
+# stats on differences between precip and clipping txs
+hist(logit(par_ratio$intercept_ratio))
+
+par_aov <- aov(log(intercept_ratio)~precip+clip, data = par_ratio)
+
+summary(par_aov)
+
+post.par <- HSD.test(par_aov, c("precip", "clip"), group = T, console = TRUE)
+
+# using emmeans, post-hoc test of precip and clip 
+post.hoc.par <- emmeans::emmeans(par_aov, specs = ~precip*clip)
+post.hoc.par
+
+# get lettering report on post-hoc test
+post.hoc.letters.par <- cld(post.hoc.par, Letters = letters, covar = T)
+post.hoc.letters.par
 

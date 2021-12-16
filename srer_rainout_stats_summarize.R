@@ -15,6 +15,10 @@ library(bbmle)
 library(DHARMa)
 library(multcomp)
 
+# The data cleaning and formatting code below is also at the top of each response
+# model script as well. This script covers how the final data set was prepped to do
+# modeling, followed by the descriptive stats
+
 ### Read in seedlings data (cohorts 1-3), make all columns factor and date a date
 seedlings <- vroom("Data/seedlings_combined.csv",
                    col_select = -c(1),
@@ -103,5 +107,52 @@ zeros <- seedlings_obs %>%
   filter(survival == "0") %>% 
   summarise(zero = 100*(n()/num_obs$obs))
 
-#glmmTMB function to build zero-inflated model, poisson dist., random factors
-#see specific response variable stat scripts for specific models
+# glmmTMB function to build zero-inflated model, poisson dist., random factors
+# see specific response variable stat scripts for specific models
+
+# pull out descriptive stats for each treatment individually and then all treatments
+# means and standard errors, not in percentages
+describeBy(seedlings_obs~precip, mat = T, digits = 4)
+
+describeBy(seedlings_obs~clip, mat = T, digits = 4)
+
+describeBy(seedlings_obs~excl, mat = T, digits = 4)
+
+describeBy(seedlings_obs~precip+clip+excl, mat = T, digits = 4)
+
+
+## get confidence intervals for each treatment and then all treatments
+# germination in percent
+Rmisc::group.CI(100*(tot_germination/10) ~ precip,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(tot_germination/10) ~ clip,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(tot_germination/10) ~ excl,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(tot_germination/10) ~ precip+clip+excl,
+                data = seedlings_obs,
+                ci = 0.95)
+
+# survival in percent
+Rmisc::group.CI(100*(survival/10) ~ precip+clip+excl,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(survival/10) ~ precip,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(survival/10) ~ clip,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(survival/10) ~ excl,
+                data = seedlings_obs,
+                ci = 0.95)
+

@@ -26,12 +26,22 @@ glimpse(ppt_srer)
 ppt_srer_avg <- ppt_srer %>%
   group_by(YEAR) %>% 
   rowwise() %>% 
-  summarise(ppt_mean = mean(c_across(JAN:DEC), na.rm = TRUE)) %>% 
+  dplyr::summarise(ppt_mean = mean(c_across(JAN:DEC), na.rm = TRUE)) %>% 
   mutate(ppt_yr_in = ppt_mean/100) %>% 
   mutate(ppt_yr_mm = ppt_yr_in*25.4) %>% 
   ungroup()
 
 summary(ppt_srer_avg)
+
+ppt_srer_monsoon <- ppt_srer %>%
+  group_by(YEAR) %>% 
+  rowwise() %>% 
+  dplyr::summarise(ppt_mean = mean(c_across(JUN:SEP), na.rm = TRUE)) %>% 
+  mutate(ppt_yr_in = ppt_mean/100) %>% 
+  mutate(ppt_yr_mm = ppt_yr_in*25.4) %>% 
+  ungroup()
+
+summary(ppt_srer_monsoon)
 
 
 ### Rainout Station PPT and Air Temp

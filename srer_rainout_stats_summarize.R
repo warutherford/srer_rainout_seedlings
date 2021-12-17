@@ -118,6 +118,8 @@ describeBy(seedlings_obs~clip, mat = T, digits = 4)
 
 describeBy(seedlings_obs~excl, mat = T, digits = 4)
 
+describeBy(seedlings_obs~cohort + precip, mat = T, digits = 4)
+
 describeBy(seedlings_obs~precip+clip+excl, mat = T, digits = 4)
 
 
@@ -135,6 +137,10 @@ Rmisc::group.CI(100*(tot_germination/10) ~ excl,
                 data = seedlings_obs,
                 ci = 0.95)
 
+Rmisc::group.CI(100*(tot_germination/10) ~ cohort,
+                data = seedlings_obs,
+                ci = 0.95)
+
 Rmisc::group.CI(100*(tot_germination/10) ~ precip+clip+excl,
                 data = seedlings_obs,
                 ci = 0.95)
@@ -149,6 +155,10 @@ Rmisc::group.CI(100*(survival/10) ~ precip,
                 ci = 0.95)
 
 Rmisc::group.CI(100*(survival/10) ~ clip,
+                data = seedlings_obs,
+                ci = 0.95)
+
+Rmisc::group.CI(100*(survival/10) ~ cohort,
                 data = seedlings_obs,
                 ci = 0.95)
 

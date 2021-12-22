@@ -7,6 +7,7 @@
 # load packages
 library(tidyverse)
 library(vroom)
+library(ggpubr)
 library(gt)
 library(glue)
 
@@ -112,7 +113,7 @@ sm_surv_fig_simple <- sm_surv %>%
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
-  ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip))+
+  ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip)) +
   geom_point(size = 6)+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+

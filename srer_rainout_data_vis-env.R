@@ -23,25 +23,23 @@ ppt_srer <- vroom("Data/site-env-data/precip_srer_DESGR.csv",
 
 glimpse(ppt_srer)
 
-ppt_srer_avg <- ppt_srer %>%
+ppt_srer_avg_all <- ppt_srer %>%
   group_by(YEAR) %>% 
   rowwise() %>% 
-  dplyr::summarise(ppt_mean = mean(c_across(JAN:DEC), na.rm = TRUE)) %>% 
-  mutate(ppt_yr_in = ppt_mean/100) %>% 
-  mutate(ppt_yr_mm = ppt_yr_in*25.4) %>% 
-  ungroup()
+  dplyr::summarise(ppt_sum = sum(c_across(JAN:DEC), na.rm = TRUE)) %>% 
+  mutate(ppt_yr_in = ppt_sum/100) %>% 
+  mutate(ppt_yr_mm = ppt_yr_in*25.4)
 
-summary(ppt_srer_avg)
+summary(ppt_srer_avg_all)
 
-ppt_srer_monsoon <- ppt_srer %>%
+ppt_srer_avg_monsoon <- ppt_srer %>%
   group_by(YEAR) %>% 
   rowwise() %>% 
-  dplyr::summarise(ppt_mean = mean(c_across(JUN:SEP), na.rm = TRUE)) %>% 
-  mutate(ppt_yr_in = ppt_mean/100) %>% 
-  mutate(ppt_yr_mm = ppt_yr_in*25.4) %>% 
-  ungroup()
+  dplyr::summarise(ppt_sum = sum(c_across(JUN:SEP), na.rm = TRUE)) %>% 
+  mutate(ppt_yr_in = ppt_sum/100) %>% 
+  mutate(ppt_yr_mm = ppt_yr_in*25.4)
 
-summary(ppt_srer_monsoon)
+summary(ppt_srer_avg_monsoon)
 
 
 ### Rainout Station PPT and Air Temp
@@ -343,7 +341,7 @@ site_env_monsoon_ppt %>%
 # number of rain days >= 0.5
 count_raindays <- site_env_monsoon_ppt %>% 
   group_by(day, year) %>% 
-  summarise(count_ppt = sum(ppt_mm > 0))
+  summarise(count_ppt = sum(ppt_mm >= 0.5))
 
 count_raindays %>% 
   group_by(year) %>% 
@@ -351,7 +349,30 @@ count_raindays %>%
 
 count_raindays_arranged <- count_raindays %>% 
   arrange(year, day)
-         
+
+# get only 2017 values
+consec_raindays_2017 <- count_raindays_arranged %>% ungroup() %>% 
+  filter(year == 2017) %>% dplyr::select(-year,-day)
+
+# highest number with value 1, which indicates a day with rain >= 0.5 mm
+consec_seq_2017 <- data.frame(unclass(rle(consec_raindays_2017$count_ppt)))
+
+# get only 2018 values
+consec_raindays_2018 <- count_raindays_arranged %>% ungroup() %>% 
+  filter(year == 2018) %>% dplyr::select(-year,-day)
+
+# highest number with value 1, which indicates a day with rain >= 0.5 mm
+consec_seq_2018 <- data.frame(unclass(rle(consec_raindays_2018$count_ppt)))  
+
+# get only 2019 values
+consec_raindays_2019 <- count_raindays_arranged %>% ungroup() %>% 
+  filter(year == 2019) %>% dplyr::select(-year,-day)
+
+# highest number with value 1, which indicates a day with rain >= 0.5 mm
+consec_seq_2019 <- data.frame(unclass(rle(consec_raindays_2019$count_ppt))) 
+
+# 2017 = 16; 2018 = 8; 2019 = 4 consecutive days with rain (>= 0.5 mm)
+
 site_env_monsoon_temp <- temp_summary %>% 
   mutate(day = as.integer(day)) %>% 
   filter(day >= 166 & day <= 273)

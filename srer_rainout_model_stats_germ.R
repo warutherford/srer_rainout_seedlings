@@ -264,3 +264,98 @@ write.csv(seedlings_obs_germ, file = "Data/seedlings_obs_germ.csv", row.names = 
 # 
 # sink()
 
+### if want to look at effects treating monsoon precip as continuous
+precip_cont_germ_df_1 <- seedlings_obs_germ %>% 
+  group_by(cohort) %>%
+  filter(cohort == "1") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "280",
+                                     "IR" = "462",
+                                     "RO" = "98")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_germ_df_2 <-seedlings_obs_germ %>% 
+  group_by(cohort) %>%
+  filter(cohort == "2") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "330",
+                                     "IR" = "545",
+                                     "RO" = "115")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_germ_df_3 <-seedlings_obs_germ %>% 
+  group_by(cohort) %>%
+  filter(cohort == "3") %>% 
+  mutate(precip_cont = dplyr::recode(precip,
+                                     "Control" = "292",
+                                     "IR" = "482",
+                                     "RO" = "102")) %>% 
+  mutate(precip_cont = as.numeric(as.character(precip_cont)))
+
+precip_cont_germ_df <- rbind(precip_cont_germ_df_1, precip_cont_germ_df_2, precip_cont_germ_df_3)
+
+precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont))
+                                                      
+# germination model
+zi.srer.germ.cont <- glmmTMB(as.factor(tot_germination) ~ precip_cont + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+                              data = precip_cont_germ_df,
+                              family = binomial(link = "logit"))
+zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)
+zi.srer.germ.cont.sum
+
+# get predictions of model
+mydf_germ <- ggpredict(zi.srer.germ.cont, type = "simulate", terms = c("precip_cont", "excl", "cohort"))
+
+# create graph
+ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
+  mutate(excl = group,
+         cohort = facet) %>%
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "All Excl")) %>%  
+  ggplot(aes(x = x, y = predicted*10)) +
+  geom_point(aes(color = excl)) +
+  #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
+  #geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  labs(y = "Seed Germination (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  #scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 75) +
+  theme_pubr(legend = "right")+
+  labs_pubr(base_size = 24)
+
+ggeff_germ_ppt_fig
+
+ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
+       plot = ggeff_germ_ppt_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+# by exclusion tx
+ggeff_excl_ppt_fig <- as.data.frame(mydf) %>%
+  mutate(excl = group, cohort = facet) %>%
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "All Excl")) %>%  
+  ggplot(aes(x = x, y = predicted*10, group = excl, color = excl)) +
+  #geom_point() +
+  #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  labs(y = "Seedling Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 45) +
+  theme_pubr(legend = "right")+
+  labs_pubr(base_size = 24)
+
+ggeff_excl_ppt_fig
+

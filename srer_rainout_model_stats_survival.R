@@ -407,19 +407,32 @@ precip_cont_surv_df_3 <-seedlings_obs %>%
 # combine into one dataframe
 precip_cont_surv_df <- rbind(precip_cont_surv_df_1, precip_cont_surv_df_2, precip_cont_surv_df_3)
 
-# make ppt a factor for graphing
+# make ppt a factor for model
 precip_cont_surv_df <- precip_cont_surv_df %>% mutate(precip_cont = as.factor(precip_cont))
 
+zi.srer.surv.cont <- glmmTMB(survival ~ precip_cont + excl + (1|cohort) + (1|sampID),
+                              data = precip_cont_surv_df,
+                              ziformula = ~.,
+                              family = poisson())
+zi.srer.surv.cont.sum <- summary(zi.srer.surv.cont)
+zi.srer.surv.cont.sum
+
 # get predictions of model
-mydf <- ggpredict(best.model.surv, type = "simulate", terms = c("precip_cont", "excl"))
+mydf <- ggpredict(zi.srer.surv.cont, type = "simulate", terms = c("precip_cont", "excl", "cohort"))
 
 # create graph
-ggeff_pred_ppt_fig <- as.data.frame(mydf) %>% mutate(excl = group) %>% 
+ggeff_pred_ppt_fig <- as.data.frame(mydf) %>%
+  mutate(excl = group, cohort = facet) %>%
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "All Excl")) %>%  
   ggplot(aes(x = x, y = predicted*10)) +
   geom_point(aes(color = excl)) +
   #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
-  labs(y = "Predicted Survival (%)",
+  labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
@@ -436,4 +449,28 @@ ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
+
+# by exclusion tx
+ggeff_excl_ppt_fig <- as.data.frame(mydf) %>%
+  mutate(excl = group, cohort = facet) %>%
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "All Excl")) %>%  
+  ggplot(aes(x = x, y = predicted*10, group = excl, color = excl)) +
+  #geom_point() +
+  #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  labs(y = "Seedling Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 45) +
+  theme_pubr(legend = "right")+
+  labs_pubr(base_size = 24)
+
+ggeff_excl_ppt_fig
+
+
 

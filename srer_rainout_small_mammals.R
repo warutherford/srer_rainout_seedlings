@@ -6,13 +6,14 @@
 
 # load packages
 library(tidyverse)
+library(lubridate)
 library(vroom)
 library(ggpubr)
 library(gt)
 library(glue)
 
 # read in data
-rodents <- vroom("Data/Trapping_Combined_2017_2019.csv",
+rodents <- vroom("Data/Trapping_Combined_2017-2019.csv",
                    col_types = c(.default = "f",
                                  date = "D"))
 
@@ -84,15 +85,18 @@ sm_surv <- cbind(rod_grouped, tot_surv_yr)
 
 # lin reg vs log
 # across all precip tx
+glimpse(sm_surv)
 summary(lm(10*mean_surv~(rod_count), data = sm_surv)) #r2 = 0.59
-summary(lm(10*mean_surv~log(rod_count), data = sm_surv))# log improves fit, r2 = 0.69  
+rod_mod <- lm(mean_surv~log(rod_count), data = sm_surv) # log improves fit, r2 = 0.69  
+summary(rod_mod)
+TukeyHSD(rod_mod)
 
-# mean survival vs trapped small mammals for each year and ppt?
-# sm_surv_fig <- sm_surv %>% 
+#mean survival vs trapped small mammals for each year and ppt?
+# sm_surv_fig <- sm_surv %>%
 #   mutate(precip = recode_factor(precip,
 #                                 "Control" = "Ambient",
 #                                 "IR" = "Wet",
-#                                 "RO" = "Drought", .ordered = TRUE)) %>% 
+#                                 "RO" = "Drought", .ordered = TRUE)) %>%
 #   ggplot(mapping = aes(x = rod_count, y = 10*mean_surv)) +
 #   geom_point(mapping = aes(color = year, shape = precip), size = 10) +
 #   geom_smooth(method = "glm", formula = y~log(x), se = F, color = "black", size = 2) +
@@ -104,7 +108,7 @@ summary(lm(10*mean_surv~log(rod_count), data = sm_surv))# log improves fit, r2 =
 #   xlim(0, 250)+
 #   ylim(0, 40)+
 #   theme_pubr(legend = c("right"))+
-#   labs_pubr(base_size = 24) 
+#   labs_pubr(base_size = 24)
 # 
 # sm_surv_fig
 
@@ -114,12 +118,13 @@ sm_surv_fig_simple <- sm_surv %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip)) +
-  geom_point(size = 6)+
+  geom_point(size = 8, aes(shape = year))+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Mean Survival (%)",
        x = "Trapped",
-       color = "PPTx") +
+       color = "PPTx",
+       shape = "Year") +
   xlim(0, 250) +
   ylim(0, 40) +
   theme_pubr(legend = c("right"))+

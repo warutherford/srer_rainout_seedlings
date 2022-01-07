@@ -363,7 +363,7 @@ pred_surv_pt <- precip_cont_surv_df %>%
                               "Control" = "None",
                               "Ants" = "Ants Excl",
                               "Rodents" = "Rodents Excl",
-                              "Total" = "Total Excl")) %>% 
+                              "Total" = "All Excl")) %>% 
   ggplot(aes(x = precip_cont, y = 10*(mean_pred_surv))) + 
   #geom_point() +
   geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +

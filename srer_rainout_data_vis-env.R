@@ -373,6 +373,7 @@ consec_seq_2019 <- data.frame(unclass(rle(consec_raindays_2019$count_ppt)))
 
 # 2017 = 16; 2018 = 8; 2019 = 4 consecutive days with rain (>= 0.5 mm)
 
+## site monsoon ppt for each year
 site_env_monsoon_temp <- temp_summary %>% 
   mutate(day = as.integer(day)) %>% 
   filter(day >= 166 & day <= 273)
@@ -445,7 +446,7 @@ str(stemplight)
 stemp <- stemplight %>% 
   dplyr::select(-lux) %>% 
   filter(location == 'BelowTemp') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00')) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   group_by(precip, location, clip) %>% 
   summarise(tempC_mean = mean(soiltempC),
@@ -455,15 +456,14 @@ stemp <- stemplight %>%
 stemp_stats <- stemplight %>% 
   dplyr::select(-lux) %>% 
   filter(location == 'BelowTemp') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00')) %>% 
   distinct(datetime, .keep_all = TRUE)
 
-
-# pull out only surface air temp
+# pull out only surface soil temp
 atemp <- stemplight %>% 
   dplyr::select(-lux) %>% 
   filter(location == 'TempLight') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00')) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   group_by(precip, location, clip) %>% 
   summarise(atempC_mean = mean(soiltempC),
@@ -474,9 +474,9 @@ stemp_series <- stemplight %>%
   dplyr::select(-lux) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   filter(location == 'BelowTemp') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00')) %>% 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00')) %>% 
   mutate(hour = hour(datetime),
-         week = week(datetime),
+         week = isoweek(datetime),
          year = as.factor(year(datetime))) %>% 
   group_by(precip, clip, week, year) %>%
   summarise(dailyavg = mean(soiltempC))
@@ -485,7 +485,7 @@ stemp_series <- stemplight %>%
 # data normal?
 hist(stemp_series$dailyavg) # looks good
 
-below_anova <- aov(dailyavg ~ precip+clip+year, data = stemp_series)
+below_anova <- aov(dailyavg ~ precip*clip*year, data = stemp_series)
 
 summary(below_anova)
 
@@ -494,10 +494,10 @@ below.aov.post <- HSD.test(below_anova, "year", group = FALSE, console = TRUE)
 # figure of 5-cm soil temp time series
 below_soil_temp_fig <- stemp_series %>% 
   group_by(precip, clip, year) %>% 
-  ggplot(mapping = aes(x = week, y = dailyavg, color = clip, linetype = year))+
+  ggplot(mapping = aes(x = week, y = dailyavg, color = clip))+
   geom_line(size = 2)+
-  #geom_smooth() +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_color_manual(values = c("brown","darkblue")) +
   #xlim(0,52)+
   labs(y = "Daily 5-cm Soil Temperature (°C)",
        x = "Week",
@@ -517,28 +517,39 @@ ggsave(filename = "Figures_Tables/environment/5cm_soil_temp.tiff",
        units = "in",
        compression = "lzw")
 
-### Air Soil Surface temp
+### Soil Surface Temp
 
-# time series of air surface soil temp, make sure time is within seedling observations
+# time series of surface soil temp, make sure time is within seedling observations
 atemp_series <- stemplight %>% 
   dplyr::select(-lux) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   filter(location == 'TempLight') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00'))
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00'))
 
 # Corrupted sensor data make NA
 atemp_fix <- atemp_series %>% 
   filter(precip == 'Ambient' & section == 'E1') %>% 
   filter((datetime >= ymd('2019-05-06') & datetime <= ymd('2019-08-01'))) %>% 
-  mutate(soiltempC = replace(soiltempC, soiltempC>0, NA))
+  mutate(soiltempC = replace(soiltempC, soiltempC > 0, NA))
+
+# make a dummy dataset of missing sensor data to keep lines from connecting on soil surface temp and light figs
+gap_fix <- vroom("Data/site-env-data/soil-temp/gap_fix.csv",
+                 col_types = c(.default = "d",
+                               precip = "f",
+                               clip = "f",
+                               week = "d",
+                               year = "f",
+                               dailyavg = "d"))
 
 # join full data set with NAs, extract daily averages for graphing
 atemp_comp <- full_join(atemp_series, atemp_fix) %>% 
   mutate(hour = hour(datetime),
-         week = week(datetime),
+         week = isoweek(datetime),
          year = as.factor(year(datetime))) %>% 
   group_by(precip, clip, week, year) %>% 
   summarise(dailyavg = mean(soiltempC))
+
+atemp_comp <- full_join(atemp_comp, gap_fix)
 
 # test sig diff of daily surface soil temp between treatments
 # data normal?
@@ -548,22 +559,18 @@ atemp_aov <- aov(dailyavg ~ precip*clip*year, data = atemp_comp)
 
 summary(atemp_aov)
 
-post.hoc.surf <- emmeans::emmeans(atemp_aov, specs = ~precip+clip)
+post.hoc.surf <- HSD.test(atemp_aov, "precip", group = FALSE, console = TRUE)
 post.hoc.surf
-
-# get lettering report on post-hoc test
-post.hoc.letters.surf <- cld(post.hoc.surf, Letters = letters, covar = T)
-post.hoc.letters.surf
 
 # plot time series with missing data in ambient clipped from 2019
 surface_temp_fig <- atemp_comp %>%
   group_by(precip, clip, week, year) %>% 
-  ggplot(mapping = aes(x = week, y = dailyavg, color = clip, linetype = year)) +
+  ggplot(mapping = aes(x = week, y = dailyavg, color = clip)) +
   geom_line(size = 2) +
-  #geom_smooth() +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_color_manual(values = c("brown","darkblue")) +
   #xlim(NA, 52) +
-  labs(y = "Daily Soil Suface Air Temperature (°C)",
+  labs(y = "Daily Soil Suface Temperature (°C)",
        x = "Week",
        color = "Grazing/Clipping",
        linetype = "Year") +
@@ -586,7 +593,7 @@ ggsave(filename = "Figures_Tables/environment/surface_soil_temp.tiff",
 light_stats <- stemplight %>% 
   drop_na(lux) %>% 
   filter(location == 'TempLight') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00') & 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00') & 
            lux > 0) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   group_by(precip, location, clip) %>% 
@@ -598,7 +605,7 @@ light <- stemplight %>%
   dplyr::select(-soiltempC) %>% 
   drop_na(lux) %>% 
   filter(location == 'TempLight') %>% 
-  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-18 00:00:00') & 
+  filter(datetime >= ymd_hms('2017-07-15 00:00:00') & datetime <= ymd_hms('2020-01-01 00:00:00') & 
            lux > 0) %>% 
   distinct(datetime, .keep_all = TRUE) %>% 
   group_by(precip, location, clip)
@@ -612,34 +619,32 @@ light_fix <- light %>%
 # join full data set with NAs, extract daily averages for graphing
 light_comp <- full_join(light, light_fix) %>% 
   mutate(hour = hour(datetime),
-         week = week(datetime),
+         week = isoweek(datetime),
          year = as.factor(year(datetime))) %>% 
   group_by(precip, clip, week, year) %>% 
   summarise(dailyavg_light = mean(lux))
+
+light_comp <- full_join(light_comp, gap_fix)
 
 # test sig diff of daily below ground soil temp between treatments
 # data normal?
 hist(light_comp$dailyavg_light) # loods good
 
-light_anova <- aov(dailyavg_light ~ precip+clip+year, data = light_comp)
+light_anova <- aov(dailyavg_light ~ precip*clip*year, data = light_comp)
 
 summary(light_anova)
 
-post.hoc.light <- emmeans::emmeans(light_anova, specs = ~precip+clip)
+post.hoc.light <- HSD.test(light_anova, "precip", group = FALSE, console = TRUE)
 post.hoc.light
-
-# get lettering report on post-hoc test
-post.hoc.letters.light <- cld(post.hoc.light, Letters = letters, covar = T)
-post.hoc.letters.light
 
 # figure of light time series
 light_fig <- light_comp %>% 
   group_by(precip, clip, year) %>% 
-  ggplot(mapping = aes(x = week, y = dailyavg_light, color = clip, linetype = year))+
-  geom_point(size = 2)+
+  ggplot(mapping = aes(x = week, y = dailyavg_light, color = clip))+
+  geom_line(size = 2)+
   scale_x_continuous(breaks=seq(0, 52, 4)) +
   scale_y_continuous(labels = scales::scientific) + 
-  geom_smooth() +
+  scale_color_manual(values = c("brown","darkblue")) +
   #xlim(0,52)+
   labs(y = "Daily Light (lux)",
        x = "Week",
@@ -683,7 +688,7 @@ summary(sm_clean)
 
 # stats
 hist(sm_clean$moisture)
-sm.aov <- aov(moisture~precip, data = sm_clean)
+sm.aov <- aov(moisture~precip*clip, data = sm_clean)
 summary(sm.aov)
 sm.aov.post <- HSD.test(sm.aov, "precip", group = F, console = TRUE)
 
@@ -709,7 +714,7 @@ sm_fig <- sm_parse %>%
   ggplot(aes(x = label, y = 100*sm_mean, color = precip, group = precip)) +
   geom_smooth(span = 0.25, se = F, size = 2) +
   geom_hline(data = sm_summary, aes(yintercept = 100*sm_mean_year, color = precip),
-             size = 1, linetype = 2) +
+             size = 2, linetype = 2) +
   scale_color_manual(values = c("grey30", "blue1", "#ba7525"),
                      labels = c("Ambient", "Wet", "Drought")) +
   scale_x_discrete(breaks = c("Jan-1", "Feb-1", "Mar-1", "Apr-1", "May-1",

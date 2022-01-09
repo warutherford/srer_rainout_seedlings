@@ -297,7 +297,7 @@ precip_cont_germ_df <- rbind(precip_cont_germ_df_1, precip_cont_germ_df_2, preci
 precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont))
                                                       
 # germination model
-zi.srer.germ.cont <- glmmTMB(as.factor(tot_germination) ~ precip_cont + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.cont <- glmmTMB(tot_germination ~ precip_cont + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
                               data = precip_cont_germ_df,
                               family = binomial(link = "logit"))
 zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)

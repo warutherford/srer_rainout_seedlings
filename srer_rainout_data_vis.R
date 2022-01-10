@@ -242,11 +242,14 @@ bar_pce_fig <- tot_surv_pce %>%
   scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
   ylim(0, 35) +
-  labs(y = "Mean Survival (%)",
+  labs(y = "Seedling Survival (%)",
        x = "PPTx") +
   theme_pubr(legend = "none") +
   facet_grid(cols = vars(clip), rows = vars(excl)) +
-  labs_pubr(base_size = 24)
+  labs_pubr(base_size = 24) +
+  theme(legend.position="none", 
+        panel.border = element_blank(), 
+        panel.spacing.x = unit(0,"line"))
 
 bar_pce_fig
 
@@ -257,19 +260,6 @@ ggsave(filename = "Figures_Tables/bar_alltx_surv.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
-
-# stats
-hist(tot_surv_pce$mean_surv)
-
-tot_mod <- (aov((10*survival)~precip+clip+excl, data = seedlings_obs))
-
-# post-hoc test of precip and exclusion 
-post.hoc.tot <- emmeans::emmeans(tot_mod, specs = ~precip*excl, by = "clip")
-post.hoc.tot
-
-# get lettering report on post-hoc test
-post.hoc.letters.tot <- cld(post.hoc.tot, Letters = letters, covar = T)
-post.hoc.letters.tot
 
 # create data set for precip and clip
 tot_surv_pc <- seedlings_obs %>% 
@@ -292,7 +282,7 @@ bar_clip_fig <- tot_surv_pc %>%
   scale_fill_manual(values = c("brown","darkorange")) +
   scale_x_discrete(labels = c("Clipped","Unclipped")) +
   ylim(0, 30) +
-  labs(y = "Mean Survival (%)",
+  labs(y = "Seedling Survival (%)",
        x = "") +
   theme_pubr(legend = "none") +
   facet_wrap(~precip)+
@@ -307,17 +297,6 @@ ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
-
-# stats
-tot_mod_clip <- (aov((survival/10)~precip+clip, data = seedlings_obs))
-
-# post-hoc test of precip and exclusion 
-post.hoc.tot.clip <- emmeans::emmeans(tot_mod_clip, specs = ~precip*clip)
-post.hoc.tot.clip
-
-# get lettering report on post-hoc test
-post.hoc.letters.tot.clip <- cld(post.hoc.tot.clip, Letters = letters, covar = T)
-post.hoc.letters.tot.clip
 
 # if want to look at effects treating monsoon precip as continuous
 precip_cont_surv_df_1 <- seedlings_obs %>% 

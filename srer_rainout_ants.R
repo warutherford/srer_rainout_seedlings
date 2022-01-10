@@ -95,7 +95,7 @@ glimpse(seedlings_obs)
 
 # create data set for survival vs ants fig
 tot_surv_yr <- seedlings_obs %>% 
-  mutate(year = recode(cohort,
+  mutate(year = dplyr::recode(cohort,
                 "1" = "2017",
                 "2" = "2018",
                 "3" = "2019"),
@@ -113,28 +113,30 @@ tot_surv_yr <- seedlings_obs %>%
 
 tot_surv_yr
 
-ants_total
+# match col names of ant data to seedling data
+ants_total <- ants_total %>% dplyr::rename(precip = tx, total_ants = total)
 
-surv_ants <- inner_join(tot_surv_yr, ants_total)
+surv_ants <- full_join(tot_surv_yr, ants_total)
 
 surv_ants
 
 # create fig
-hist(surv_ants$total)
+hist(surv_ants$total_ants)
 hist((surv_ants$mean_surv))
 
 surv_ants_fig <- surv_ants %>% 
-  ggplot(mapping = aes(x = total, y = (10*mean_surv), color = precip))+
+  ggplot(mapping = aes(x = total_ants, y = (10*mean_surv), color = precip))+
   geom_point(size = 6, aes(shape = year))+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
-  labs(y = "Mean Survival (%)",
-       x = "Trapped",
-       color = "PPTx") +
+  labs(y = "Seedling Survival (%)",
+       x = "Ants Captured (within plots)",
+       color = "PPTx",
+       shape = "Year") +
   xlim(0, 1500) +
   ylim(0, 40) +
   theme_pubr(legend = c("right"))+
-  labs_pubr(base_size = 24)+facet_wrap(~clip)
+  labs_pubr(base_size = 24)
 
 surv_ants_fig
 
@@ -148,28 +150,8 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
 
 # get slopes of each line
 # across all precip tx
-summary(lm(10*mean_surv~(total), data = surv_ants)) #r2 = 0.24
-summary(lm(10*mean_surv~log(total), data = surv_ants))# log improves fit, r2 = 0.29  
+summary(lm(10*mean_surv~(total_ants), data = surv_ants)) #r2 = 0.19
+summary(lm(10*mean_surv~log(total_ants), data = surv_ants))# log improves fit, r2 = 0.222  
 
-# just wet tx
-wet <- surv_ants %>% 
-  filter(precip == "Wet")
-
-summary(lm(10*mean_surv~(total), data = wet)) # r2 = 0.40
-summary(lm(10*mean_surv~log(total), data = wet)) # log improves fit, r2 = 0.496
-
-# just ambient tx
-ambient <- surv_ants %>% 
-  filter(precip == "Ambient")
-
-summary(lm(10*mean_surv~total, data = ambient)) # r2 = 0.302
-summary(lm(10*mean_surv~log(total), data = ambient)) # log improves fit, r2 = 0.304
-
-# just drought tx
-drought <- surv_ants %>% 
-  filter(precip == "Drought")
-
-summary(lm(10*mean_surv~total, data = drought)) # r2 = 0.18
-summary(lm(10*mean_surv~log(total), data = drought)) # log improves fit, r2 = 0.28
 
 

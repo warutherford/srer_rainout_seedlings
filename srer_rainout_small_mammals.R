@@ -121,8 +121,8 @@ sm_surv_fig_simple <- sm_surv %>%
   geom_point(size = 8, aes(shape = year))+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
-  labs(y = "Mean Survival (%)",
-       x = "Trapped",
+  labs(y = "Seedling Survival (%)",
+       x = "Small Mammals Captured (site-level)",
        color = "PPTx",
        shape = "Year") +
   xlim(0, 250) +

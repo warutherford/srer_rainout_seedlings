@@ -26,7 +26,6 @@ seedlings_obs_germ <- vroom("Data/seedlings_obs_germ.csv",
                                  cohort = "f"))
 str(seedlings_obs_germ)
 
-
 # descriptive stats for each cohort 1-3
 describeBy(seedlings_obs_germ , group = "cohort")
 
@@ -71,12 +70,12 @@ tot_germ_fig
 # create data set for precip and excl and clip
 tot_germ_pce <- seedlings_obs_germ %>% 
   group_by(precip, excl, clip) %>% 
-  summarise(mean_germ = 100*mean(tot_germination),
-            sd_germ = 100*sd(tot_germination),
+  summarise(mean_germ = mean(100*(tot_germination)),
+            sd_germ = sd(100*(tot_germination)),
             counts = n(),
             se_germ = (sd_germ/sqrt(counts))) %>%
-  mutate(upper = mean_germ + se_germ,
-         lower = mean_germ - se_germ)
+  mutate(upper = mean_germ + 10*se_germ,
+         lower = mean_germ - 10*se_germ)
 
 bar_pce_germ_fig <- tot_germ_pce %>%
   mutate(precip = recode_factor(precip,
@@ -94,11 +93,14 @@ bar_pce_germ_fig <- tot_germ_pce %>%
   scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
   ylim(0, 80) +
-  labs(y = "Mean Germination (%)",
+  labs(y = "Seed Germination (%)",
        x = "PPTx") +
   theme_pubr(legend = "none") +
   facet_grid(cols = vars(clip), rows = vars(excl)) +
-  labs_pubr()
+  labs_pubr(base_size = 24) +
+  theme(legend.position="none", 
+        panel.border = element_blank(), 
+        panel.spacing.x = unit(0,"line"))
 
 bar_pce_germ_fig
 

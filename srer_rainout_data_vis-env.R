@@ -628,7 +628,7 @@ light_comp <- full_join(light_comp, gap_fix)
 
 # test sig diff of daily below ground soil temp between treatments
 # data normal?
-hist(light_comp$dailyavg_light) # loods good
+hist(light_comp$dailyavg_light) # looks good
 
 light_anova <- aov(dailyavg_light ~ precip*clip*year, data = light_comp)
 
@@ -750,20 +750,22 @@ str(par)
 par_long <- par %>% 
   pivot_longer(6:8, names_to = "transect", values_to = "value")
 
-# calculate plot average
+# calculate average of three transects
 par_calc <- par_long %>% 
   group_by(date, block, tx, location, clip) %>% 
   summarise(mean_read = mean(value))
 
 # separate above reads with below canopy ready to create ratio of intercepted light
 par_calc_above <- par_calc %>% 
-  filter(location == "Above")
+  filter(location == "Above") %>% 
+  droplevels()
 
 par_calc_below <- par_calc %>% 
-  filter(location == "Below" & tx != "RO-Above") 
+  filter(location == "Below" & tx != "RO-Above") %>% 
+  droplevels()
 
 par_loc <- bind_cols(par_calc_above, par_calc_below, .name_repair = "unique") %>% 
-  select(1:6,10,12) %>% 
+  dplyr::select(1:6,10,12) %>% 
   rename(date = date...1,
          block = block...2,
          precip = tx...3,
@@ -775,6 +777,8 @@ par_loc <- bind_cols(par_calc_above, par_calc_below, .name_repair = "unique") %>
 
 # calculate intercepted PAR ratio
 par_ratio <- par_loc %>%  mutate(intercept_ratio = 1-(bel_read/abv_read))
+
+summary(par_ratio)
 
 # look at summary of ratios
 par_ratio %>% group_by(precip, clip) %>% 
@@ -793,7 +797,7 @@ par_fig <- par_ratio %>%
   scale_x_discrete(labels = c("","")) +
   labs(y = "Intercepted PAR (%)",
        x = "") +
-  ylim(0,100)+
+  ylim(NA,100)+
   theme_pubr(legend = "none") +
   facet_wrap(~precip)+
   labs_pubr(base_size = 24)
@@ -810,20 +814,13 @@ ggsave(filename = "Figures_Tables/environment/lqs_par.tiff",
        compression = "lzw")
 
 
-# stats on differences between precip and clipping txs
-hist(logit(par_ratio$intercept_ratio))
+# Anova of differences between precip and clipping txs
+hist(sqrt(par_ratio$intercept_ratio)) # better with sqrt
 
-par_aov <- aov(log(intercept_ratio)~precip+clip, data = par_ratio)
+par_aov <- aov(sqrt(intercept_ratio)~precip*clip, data = par_ratio)
 
 summary(par_aov)
 
 post.par <- HSD.test(par_aov, c("precip", "clip"), group = T, console = TRUE)
 
-# using emmeans, post-hoc test of precip and clip 
-post.hoc.par <- emmeans::emmeans(par_aov, specs = ~precip*clip)
-post.hoc.par
-
-# get lettering report on post-hoc test
-post.hoc.letters.par <- cld(post.hoc.par, Letters = letters, covar = T)
-post.hoc.letters.par
 

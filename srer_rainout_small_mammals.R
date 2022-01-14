@@ -66,8 +66,16 @@ str(seedlings_obs)
 glimpse(seedlings_obs)
 
 # create data set for raw survival data
-tot_surv_yr <- seedlings_obs %>% 
-  group_by(precip, cohort) %>% 
+tot_surv_yr <- seedlings_obs %>%
+  mutate(year = dplyr::recode(cohort,
+                              "1" = "2017",
+                              "2" = "2018",
+                              "3" = "2019"),
+         precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = F)) %>% 
+  group_by(precip, year) %>% 
   summarise(mean_surv = mean(survival),
             sd_surv = sd(survival),
             counts = n(),
@@ -81,15 +89,21 @@ rod_grouped <- rod_year %>%
   group_by(year) %>% 
   summarise(rod_count = sum(count))
 
-sm_surv <- cbind(rod_grouped, tot_surv_yr)
+sm_surv <- full_join(rod_grouped, tot_surv_yr, by = "year")
+sm_surv 
 
 # lin reg vs log
 # across all precip tx
 glimpse(sm_surv)
-summary(lm(10*mean_surv~(rod_count), data = sm_surv)) #r2 = 0.59
-rod_mod <- lm(mean_surv~log(rod_count), data = sm_surv) # log improves fit, r2 = 0.69  
+
+hist((sm_surv$rod_count))
+hist(log(sm_surv$rod_count)) #better
+
+summary(lm(mean_surv~(rod_count)*year, data = sm_surv)) #r2 = 0.69
+rod_mod <- lm(mean_surv~log(rod_count)*year, data = sm_surv) # log improves fit, r2 = 0.69 
 summary(rod_mod)
-TukeyHSD(rod_mod)
+
+plot(rod_mod)
 
 #mean survival vs trapped small mammals for each year and ppt?
 # sm_surv_fig <- sm_surv %>%
@@ -113,19 +127,15 @@ TukeyHSD(rod_mod)
 # sm_surv_fig
 
 sm_surv_fig_simple <- sm_surv %>% 
-  mutate(precip = recode_factor(precip,
-                                "Control" = "Ambient",
-                                "IR" = "Wet",
-                                "RO" = "Drought", .ordered = TRUE)) %>% 
   ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip)) +
-  geom_point(size = 8, aes(shape = year))+
+  geom_point(size = 8, aes(shape = year), position = "jitter")+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
-  geom_smooth(method = "glm", formula = y ~ log(x), se = F, size = 2)+
+  geom_smooth(method = "lm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Seedling Survival (%)",
-       x = "Small Mammals Captured (site-level)",
+       x = "Small Mammals Captured",
        color = "PPTx",
        shape = "Year") +
-  xlim(0, 250) +
+  xlim(0, 300) +
   ylim(0, 40) +
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)

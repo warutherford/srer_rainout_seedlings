@@ -347,7 +347,7 @@ pred_surv_pt <- precip_cont_surv_df %>%
   #geom_point() +
   geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
-  labs(y = "Predicted Survival (%)",
+  labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
@@ -359,6 +359,40 @@ pred_surv_pt
 
 ggsave(filename = "Figures_Tables/pred_surv_cont.tiff",
        plot = pred_surv_pt,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
+pred_surv_excl <- precip_cont_surv_df %>% 
+  group_by(precip_cont, excl) %>% 
+  summarise(mean_pred_surv = mean(pred_surv),
+            sd_surv = sd(pred_surv),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_pred_surv + se_surv,
+         lower = mean_pred_surv - se_surv) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Rodents Excl",
+                              "Total" = "All Excl")) %>% 
+  ggplot(aes(x = precip_cont, y = 10*(mean_pred_surv), group = excl, color = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  labs(y = "Seedling Survival (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 45) +
+  theme_pubr(legend = "none")+
+  labs_pubr(base_size = 24)
+
+pred_surv_excl
+
+ggsave(filename = "Figures_Tables/pred_surv_cont_excl.tiff",
+       plot = pred_surv_excl,
        dpi = 800,
        width = 22,
        height = 12,

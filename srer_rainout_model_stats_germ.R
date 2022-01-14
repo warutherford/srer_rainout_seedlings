@@ -6,6 +6,7 @@
 
 # Load packages
 library(tidyverse)
+library(ggpubr)
 library(vroom)
 library(psych)
 library(glmmTMB)
@@ -15,6 +16,7 @@ library(multcomp)
 library(MuMIn)
 library(emmeans)
 library(car)
+library(ggeffects)
 
 ### Read in seedlings data (cohorts 1-3), make all columns factor and date a date
 seedlings <- vroom("Data/seedlings_combined.csv",
@@ -304,26 +306,27 @@ zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)
 zi.srer.germ.cont.sum
 
 # get predictions of model
-mydf_germ <- ggpredict(zi.srer.germ.cont, type = "simulate", terms = c("precip_cont", "excl", "cohort"))
+mydf_germ <- ggpredict(zi.srer.germ.cont, type = "re", terms = c("precip_cont", "excl", "cohort"))
 
 # create graph
 ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
   mutate(excl = group,
-         cohort = facet) %>%
+         cohort = facet,
+         precip = as.integer(as.character(x))) %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
                               "Ants" = "Ants Excl",
                               "Rodents" = "Rodents Excl",
-                              "Total" = "All Excl")) %>%  
-  ggplot(aes(x = x, y = predicted*10)) +
+                              "Total" = "All Excl")) %>% 
+  ggplot(aes(x = precip, y = predicted*100)) +
   geom_point(aes(color = excl)) +
-  #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
-  #geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  geom_pointrange(aes(ymin = ((100*predicted) - std.error), ymax = ((100*predicted) + std.error), color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
   labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  #scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
-  ylim(0, 75) +
+  scale_x_continuous(breaks = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550), limits = c(0, 600))+
+  ylim(NA, 100) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)
 
@@ -338,24 +341,29 @@ ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
        compression = "lzw")
 
 # by exclusion tx
-ggeff_excl_ppt_fig <- as.data.frame(mydf) %>%
-  mutate(excl = group, cohort = facet) %>%
+ggeff_excl_ppt_fig <- as.data.frame(mydf_germ) %>%
+  mutate(excl = group,
+         cohort = facet,
+         precip = as.integer(as.character(x))) %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
                               "Ants" = "Ants Excl",
                               "Rodents" = "Rodents Excl",
                               "Total" = "All Excl")) %>%  
-  ggplot(aes(x = x, y = predicted*10, group = excl, color = excl)) +
+  ggplot(aes(x = precip, y = predicted*100, group = excl, color = excl)) +
   #geom_point() +
   #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
-  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  geom_smooth(method = "glm", formula = y ~ log(x)+x, se = F, size = 2)+
   labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
-  ylim(0, 45) +
+  ylim(0, 100) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)
 
 ggeff_excl_ppt_fig
+
+
+
 

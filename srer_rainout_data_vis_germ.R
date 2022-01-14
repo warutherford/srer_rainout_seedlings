@@ -240,7 +240,7 @@ pred_germ_pt <- precip_cont_df %>%
   #geom_point() +
   geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
-  labs(y = "Predicted Germination (%)",
+  labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
@@ -258,6 +258,38 @@ ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
        units = "in",
        compression = "lzw")
 
+pred_germ_excl_fig <- precip_cont_df %>% 
+  group_by(precip_cont, excl) %>% 
+  summarise(mean_pred_germ = mean(pred_germ),
+            sd_germ = sd(pred_germ),
+            counts = n(),
+            se_germ = (sd_germ/sqrt(counts))) %>%
+  mutate(upper = mean_pred_germ + se_germ,
+         lower = mean_pred_germ - se_germ) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Ants" = "Ants Excl",
+                              "Rodents" = "Small Mammals Excl",
+                              "Total" = "All Excl")) %>% 
+  ggplot(aes(x = precip_cont, y = 100*(mean_pred_germ), group = excl, color = excl)) + 
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  labs(y = "Seed Germination (%)",
+       x = "Precipitation (mm)",
+       color = "Exclusion") +
+  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  ylim(0, 100) +
+  theme_pubr(legend = "none")+
+  labs_pubr(base_size = 24)
+
+pred_germ_excl_fig
+
+ggsave(filename = "Figures_Tables/pred_germ_cont_excl.tiff",
+       plot = pred_germ_excl_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 describeBy(seedlings_obs_germ, group = "excl")
 

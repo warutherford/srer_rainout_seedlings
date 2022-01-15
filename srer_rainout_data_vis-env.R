@@ -185,7 +185,7 @@ sum_2017_monsoon <- ppt_summary %>%
 
 sum_2018_monsoon <- ppt_summary %>% 
   group_by(day, year) %>% 
-  filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
+  filter(as.integer(day) >= 166 & as.integer(day) <= 273) %>% 
   summarize(ppt_mm_sum = sum(ppt_mm),
             ppt_in_sum = sum(ppt_in)) %>% 
   filter(year == 2018) %>% 
@@ -195,7 +195,7 @@ sum_2018_monsoon <- ppt_summary %>%
 
 sum_2019_monsoon <- ppt_summary %>% 
   group_by(day, year) %>% 
-  filter(as.integer(day) >= 166 & as.integer(day) <= 258) %>% 
+  filter(as.integer(day) >= 166 & as.integer(day) <= 273) %>% 
   summarize(ppt_mm_sum = sum(ppt_mm),
             ppt_in_sum = sum(ppt_in)) %>% 
   filter(year == 2019) %>% 
@@ -357,12 +357,16 @@ consec_raindays_2017 <- count_raindays_arranged %>% ungroup() %>%
 # highest number with value 1, which indicates a day with rain >= 0.5 mm
 consec_seq_2017 <- data.frame(unclass(rle(consec_raindays_2017$count_ppt)))
 
+# largest gap = 9 days not counting the end of the monsoon dry down
+
 # get only 2018 values
 consec_raindays_2018 <- count_raindays_arranged %>% ungroup() %>% 
   filter(year == 2018) %>% dplyr::select(-year,-day)
 
 # highest number with value 1, which indicates a day with rain >= 0.5 mm
 consec_seq_2018 <- data.frame(unclass(rle(consec_raindays_2018$count_ppt)))  
+
+# largest gap = 21 days between rain events >= 0.5mm, followed by 14
 
 # get only 2019 values
 consec_raindays_2019 <- count_raindays_arranged %>% ungroup() %>% 
@@ -371,12 +375,17 @@ consec_raindays_2019 <- count_raindays_arranged %>% ungroup() %>%
 # highest number with value 1, which indicates a day with rain >= 0.5 mm
 consec_seq_2019 <- data.frame(unclass(rle(consec_raindays_2019$count_ppt))) 
 
+# largest gap = 11 days not counting the dry start of the monsoon
+
 # 2017 = 16; 2018 = 8; 2019 = 4 consecutive days with rain (>= 0.5 mm)
 
 ## site monsoon ppt for each year
 site_env_monsoon_temp <- temp_summary %>% 
   mutate(day = as.integer(day)) %>% 
   filter(day >= 166 & day <= 273)
+
+lines_dat <- data.frame(year = c(2017,2018, 2019), precip = c(280, 330, 292)) %>% 
+  mutate(year = as.factor(year))
 
 site_env_monsoon_fig <- site_env_monsoon_ppt %>% 
   group_by(day, year) %>% 
@@ -385,39 +394,26 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
     label = as.factor(label)) %>% 
   ggplot(aes(x = label)) +
   geom_col(aes(y = ppt_mm, fill = year), color = "black") +
-  # geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
-  # geom_smooth(mapping = aes(y = site_temp, color = "#FF3300"),
-  #             size = 1.5,
-  #             span = 0.07,
-  #             se = FALSE,
-  #             data = site_env_monsoon_temp) +
-  # scale_color_discrete(guide = guide_legend(label = FALSE)) +
-  # geom_smooth(mapping = aes(y = ppt_mm), color = "#330066", show.legend = TRUE,
-  #             size = 1.5,
-  #             span = 0.5,
-  #             se = FALSE) +
-  scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0")) +
+  geom_hline(data = lines_dat, aes(yintercept = precip, group = year, color = year), size = 1.5) +
+  geom_hline(aes(yintercept = 240, color = "Long-term Mean"), size = 1.5, show.legend = TRUE) +
+  scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0"), na.value = "") +
+  scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0", "darkorange")) +
   scale_x_discrete(breaks = c("Jun-15", "Jun-25", "Jul-5", "Jul-15", "Jul-25",
                               "Aug-5", "Aug-15", "Aug-25", "Sep-5", "Sep-15",
                               "Sep-25")) +
-  scale_y_continuous(name = "Precipitation (mm)",
-                     breaks = seq(0, 150, 10),
-                     expand = c(0.01,0)) +
-                     # sec.axis = sec_axis(~.,
-                     #                     name = "Mean Temperature (°C)",
-                     #                     breaks = seq(0, 40, 10)),
-                     # expand = c(0.0,0)) +
+  ylim(0, 350)+
+  scale_y_break(breaks = c(70, 100),scales = "free", ticklabels = c(100, 105, 110), space = 0.5)+
+  scale_y_break(breaks = c(110, 200), scales = "free", space = 0.5)+
   labs(x = "Month - Day",
-       fill = "Precipitation",
-       color = "Temperature") +
+       y = "PPT (mm)",
+       fill = "Daily PPT",
+       color = "Total Monsoon PPT",
+       yintercept = NULL) +
   facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "top", margin = T, x.text.angle = 45) +
-  theme(axis.title.y = element_text(hjust = 0.4, vjust = 1)) +
-  labs_pubr(base_size = 24)
-        # axis.title.y.right = element_text(hjust = 0.9,
-        #                                   vjust = 1,
-        #                                   size = 10))
-
+  theme(axis.title.y = element_text(vjust = -1)) +
+  labs_pubr(base_size = 24)+
+  guides(fill = guide_legend(override.aes = list(linetype = 0)))
 
 site_env_monsoon_fig
 

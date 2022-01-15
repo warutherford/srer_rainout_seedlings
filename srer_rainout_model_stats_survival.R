@@ -179,7 +179,7 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl + clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl + clip + excl/clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs,
                              ziformula = ~.,
                              family = poisson())
@@ -226,7 +226,7 @@ zi.srer.surv.p.sum
 Anova(zi.srer.surv.p)
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.surv.pe.int <- glmmTMB(survival ~ block+precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.surv.pe.int <- glmmTMB(survival ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
                                data = seedlings_obs,
                                ziformula = ~.,
                                family = poisson())

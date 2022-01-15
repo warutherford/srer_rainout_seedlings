@@ -235,7 +235,7 @@ pred_germ_pt <- precip_cont_df %>%
                               "Control" = "None",
                               "Ants" = "Ants Excl",
                               "Rodents" = "Small Mammals Excl",
-                              "Total" = "Total Excl")) %>% 
+                              "Total" = "All Excl")) %>% 
   ggplot(aes(x = precip_cont, y = 100*(mean_pred_germ))) + 
   #geom_point() +
   geom_pointrange(aes(ymin = 100*lower, ymax = 100*upper, color = excl), size = 0.5) +

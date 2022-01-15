@@ -341,7 +341,7 @@ pred_surv_pt <- precip_cont_surv_df %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
                               "Ants" = "Ants Excl",
-                              "Rodents" = "Rodents Excl",
+                              "Rodents" = "Small Mammals Excl",
                               "Total" = "All Excl")) %>% 
   ggplot(aes(x = precip_cont, y = 10*(mean_pred_surv))) + 
   #geom_point() +

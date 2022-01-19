@@ -299,14 +299,14 @@ precip_cont_germ_df <- rbind(precip_cont_germ_df_1, precip_cont_germ_df_2, preci
 precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont))
                                                       
 # germination model
-zi.srer.germ.cont <- glmmTMB(tot_germination ~ precip_cont + excl + (1|cohort) + (1|sampID),# + ar1(date + 0|cohort),
+zi.srer.germ.cont <- glmmTMB(tot_germination ~ precip_cont + excl + (1|cohort) + (1|sampID),
                               data = precip_cont_germ_df,
                               family = binomial(link = "logit"))
 zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)
 zi.srer.germ.cont.sum
 
 # get predictions of model
-mydf_germ <- ggpredict(zi.srer.germ.cont, type = "re", terms = c("precip_cont", "excl", "cohort"))
+mydf_germ <- ggpredict(zi.srer.germ.cont, type = "simulate_random", terms = c("precip_cont", "excl", "cohort"))
 
 # create graph
 ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
@@ -319,9 +319,9 @@ ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
                               "Rodents" = "Rodents Excl",
                               "Total" = "All Excl")) %>% 
   ggplot(aes(x = precip, y = predicted*100)) +
-  geom_point(aes(color = excl)) +
-  geom_pointrange(aes(ymin = ((100*predicted) - std.error), ymax = ((100*predicted) + std.error), color = excl), size = 0.5) +
-  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2)+
+  #geom_point(aes(color = excl)) +
+  geom_pointrange(aes(ymin = (100*conf.low), ymax = (100*conf.high), color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
   labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
@@ -351,10 +351,8 @@ ggeff_excl_ppt_fig <- as.data.frame(mydf_germ) %>%
                               "Rodents" = "Rodents Excl",
                               "Total" = "All Excl")) %>%  
   ggplot(aes(x = precip, y = predicted*100, group = excl, color = excl)) +
-  #geom_point() +
-  #geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x)+x, se = F, size = 2)+
-  labs(y = "Seedling Survival (%)",
+  labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
   scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
@@ -364,6 +362,12 @@ ggeff_excl_ppt_fig <- as.data.frame(mydf_germ) %>%
 
 ggeff_excl_ppt_fig
 
-
+ggsave(filename = "Figures_Tables/pred_germ_excl_cont.tiff",
+       plot = ggeff_excl_ppt_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 

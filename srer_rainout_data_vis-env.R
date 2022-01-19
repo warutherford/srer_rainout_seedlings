@@ -718,7 +718,7 @@ sm_fig <- sm_parse %>%
                               "Nov-1", "Dec-1")) +
   labs(y = "Volumetric Water Content (%)",
        x = "Month - Day",
-       color = "Precipitation") +
+       color = "PPTx") +
   theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 

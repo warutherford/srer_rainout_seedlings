@@ -75,7 +75,8 @@ exclTotal      0.75501    0.16432   4.595 4.33e-06 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
  Family: binomial  ( logit )
-Formula:          tot_germination ~ precip/clip/excl + (1 | cohort) + (1 | sampID) +      ar1(date + 0 | cohort)
+Formula:          tot_germination ~ precip + precip/clip + precip/excl + excl/clip +  
+    excl + clip + precip/clip/excl + (1 | cohort) + (1 | sampID) +      ar1(date + 0 | cohort)
 Data: seedlings_obs_germ
 
      AIC      BIC   logLik deviance df.resid 
@@ -85,37 +86,37 @@ Random effects:
 
 Conditional model:
  Groups   Name           Variance  Std.Dev. Corr      
- cohort   (Intercept)    5.822e-05 0.00763            
- sampID   (Intercept)    7.565e+00 2.75040            
- cohort.1 date2017-07-15 2.170e+01 4.65806  0.95 (ar1)
+ cohort   (Intercept)    4.805e-05 0.006932           
+ sampID   (Intercept)    7.565e+00 2.750398           
+ cohort.1 date2017-07-15 2.169e+01 4.657552 0.95 (ar1)
 Number of obs: 206400, groups:  cohort, 3; sampID, 2400
 
 Conditional model:
-                                        Estimate Std. Error z value Pr(>|z|)    
-(Intercept)                             -2.27204    2.08529  -1.090  0.27591    
-precipIR                                 0.74636    0.39728   1.879  0.06029 .  
-precipRO                                -2.47917    0.40152  -6.175 6.64e-10 ***
-precipControl:clipUnclipped              0.31904    0.39796   0.802  0.42273    
-precipIR:clipUnclipped                  -0.36620    0.39666  -0.923  0.35590    
-precipRO:clipUnclipped                   0.03529    0.40705   0.087  0.93091    
-precipControl:clipClipped:exclAnts       1.16477    0.39648   2.938  0.00331 ** 
-precipIR:clipClipped:exclAnts            0.59157    0.39665   1.491  0.13585    
-precipRO:clipClipped:exclAnts            0.21045    0.40620   0.518  0.60439    
-precipControl:clipUnclipped:exclAnts     0.79002    0.39747   1.988  0.04686 *  
-precipIR:clipUnclipped:exclAnts          0.80138    0.39629   2.022  0.04316 *  
-precipRO:clipUnclipped:exclAnts          0.22361    0.40661   0.550  0.58237    
-precipControl:clipClipped:exclRodents    0.40811    0.39665   1.029  0.30352    
-precipIR:clipClipped:exclRodents         0.69075    0.39763   1.737  0.08236 .  
-precipRO:clipClipped:exclRodents         0.96477    0.40211   2.399  0.01643 *  
-precipControl:clipUnclipped:exclRodents  0.97532    0.39790   2.451  0.01424 *  
-precipIR:clipUnclipped:exclRodents       1.03013    0.39638   2.599  0.00935 ** 
-precipRO:clipUnclipped:exclRodents      -0.14458    0.40805  -0.354  0.72309    
-precipControl:clipClipped:exclTotal      0.85680    0.39661   2.160  0.03075 *  
-precipIR:clipClipped:exclTotal           0.41919    0.39790   1.054  0.29210    
-precipRO:clipClipped:exclTotal           0.60693    0.40362   1.504  0.13265    
-precipControl:clipUnclipped:exclTotal    1.58396    0.39833   3.976 7.00e-05 ***
-precipIR:clipUnclipped:exclTotal         0.71736    0.39727   1.806  0.07096 .  
-precipRO:clipUnclipped:exclTotal         0.30719    0.40584   0.757  0.44909    
+                                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                         -2.2723     2.0851  -1.090   0.2758    
+precipIR                             0.7464     0.3973   1.879   0.0603 .  
+precipRO                            -2.4791     0.4015  -6.174 6.64e-10 ***
+exclAnts                             1.1648     0.3965   2.938   0.0033 ** 
+exclRodents                          0.4082     0.3966   1.029   0.3035    
+exclTotal                            0.8568     0.3966   2.160   0.0307 *  
+clipUnclipped                        0.3191     0.3980   0.802   0.4227    
+precipIR:clipUnclipped              -0.6853     0.5619  -1.220   0.2226    
+precipRO:clipUnclipped              -0.2837     0.5693  -0.498   0.6182    
+precipIR:exclAnts                   -0.5733     0.5608  -1.022   0.3067    
+precipRO:exclAnts                   -0.9544     0.5676  -1.681   0.0927 .  
+precipIR:exclRodents                 0.2826     0.5616   0.503   0.6149    
+precipRO:exclRodents                 0.5566     0.5648   0.985   0.3244    
+precipIR:exclTotal                  -0.4376     0.5618  -0.779   0.4360    
+precipRO:exclTotal                  -0.2499     0.5658  -0.442   0.6587    
+exclAnts:clipUnclipped              -0.3748     0.5614  -0.668   0.5043    
+exclRodents:clipUnclipped            0.5671     0.5618   1.009   0.3128    
+exclTotal:clipUnclipped              0.7271     0.5621   1.294   0.1958    
+precipIR:exclAnts:clipUnclipped      0.5847     0.7934   0.737   0.4612    
+precipRO:exclAnts:clipUnclipped      0.3879     0.8034   0.483   0.6292    
+precipIR:exclRodents:clipUnclipped  -0.2277     0.7943  -0.287   0.7743    
+precipRO:exclRodents:clipUnclipped  -1.6766     0.8024  -2.089   0.0367 *  
+precipIR:exclTotal:clipUnclipped    -0.4290     0.7950  -0.540   0.5895    
+precipRO:exclTotal:clipUnclipped    -1.0269     0.8022  -1.280   0.2005    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
  Family: binomial  ( logit )
@@ -157,16 +158,17 @@ zi.srer.germ.pe.int 17.3     3.9 16
 zi.srer.germ.full   27.9     6.7 28
 zi.srer.germ.pc.int  5.3    15.9 10
 zi.srer.germ.p       0.0    20.5 7 
-Formula:          tot_germination ~ precip + excl + (1 | cohort) + (1 | sampID)
+Formula:          tot_germination ~ precip + excl + (1 | cohort) + (1 | sampID) +      ar1(date + 0 | cohort)
 Data: seedlings_obs_germ
       AIC       BIC    logLik  df.resid 
-182023.67 182105.57 -91003.84    206392 
+146204.53 146306.91 -73092.27    206390 
 Random-effects (co)variances:
 
 Conditional model:
- Groups Name        Std.Dev.
- cohort (Intercept) 1.024   
- sampID (Intercept) 2.085   
+ Groups   Name           Std.Dev. Corr      
+ cohort   (Intercept)    0.007369           
+ sampID   (Intercept)    2.767745           
+ cohort.1 date2017-07-15 4.655842 0.95 (ar1)
 
 Number of obs: 206400 / Conditional model: cohort, 3; sampID, 2400
 
@@ -174,36 +176,89 @@ Fixed Effects:
 
 Conditional model:
 (Intercept)     precipIR     precipRO     exclAnts  exclRodents    exclTotal  
-     0.0808       0.1216      -2.2987       0.4862       0.4920       0.5294  
- precip  excl     emmean    SE     df lower.CL upper.CL
- Control Control  0.0808 0.601 206392   -1.097    1.258
- IR      Control  0.2024 0.601 206392   -0.975    1.380
- RO      Control -2.2179 0.601 206392   -3.396   -1.040
- Control Ants     0.5670 0.601 206392   -0.610    1.744
- IR      Ants     0.6886 0.601 206392   -0.489    1.866
- RO      Ants    -1.7318 0.601 206392   -2.910   -0.554
- Control Rodents  0.5728 0.601 206392   -0.604    1.750
- IR      Rodents  0.6944 0.601 206392   -0.483    1.872
- RO      Rodents -1.7260 0.601 206392   -2.904   -0.548
- Control Total    0.6102 0.601 206392   -0.567    1.787
- IR      Total    0.7318 0.601 206392   -0.445    1.909
- RO      Total   -1.6886 0.601 206392   -2.866   -0.511
+    -1.9060       0.2134      -3.0742       0.6385       0.6632       0.7550  
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+                    Chisq Df Pr(>Chisq)    
+precip           655.5561  2  < 2.2e-16 ***
+excl              26.7986  3  6.488e-06 ***
+clip               0.0688  1   0.793093    
+precip:clip       10.6279  2   0.004923 ** 
+precip:excl        8.1867  6   0.224739    
+clip:excl          1.1833  3   0.757004    
+precip:clip:excl   9.3129  6   0.156729    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+          Chisq Df Pr(>Chisq)    
+precip 650.8368  2  < 2.2e-16 ***
+clip     0.0672  1     0.7955    
+excl    26.6224  3  7.064e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+         Chisq Df Pr(>Chisq)    
+precip 650.844  2  < 2.2e-16 ***
+excl    26.621  3  7.068e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+        Chisq Df Pr(>Chisq)    
+precip 644.43  2  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+              Chisq Df Pr(>Chisq)    
+precip      650.617  2  < 2.2e-16 ***
+precip:excl  34.851  9  6.329e-05 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: tot_germination
+              Chisq Df Pr(>Chisq)    
+precip      645.877  2    < 2e-16 ***
+precip:clip  10.635  3    0.01387 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ precip  excl    emmean   SE     df lower.CL upper.CL
+ Control Control -1.906 2.07 206390    -5.97    2.153
+ IR      Control -1.693 2.07 206390    -5.75    2.366
+ RO      Control -4.980 2.07 206390    -9.04   -0.921
+ Control Ants    -1.268 2.07 206390    -5.33    2.792
+ IR      Ants    -1.054 2.07 206390    -5.11    3.005
+ RO      Ants    -4.342 2.07 206390    -8.40   -0.282
+ Control Rodents -1.243 2.07 206390    -5.30    2.816
+ IR      Rodents -1.029 2.07 206390    -5.09    3.030
+ RO      Rodents -4.317 2.07 206390    -8.38   -0.258
+ Control Total   -1.151 2.07 206390    -5.21    2.908
+ IR      Total   -0.938 2.07 206390    -5.00    3.121
+ RO      Total   -4.225 2.07 206390    -8.28   -0.166
 
 Results are given on the logit (not the response) scale. 
 Confidence level used: 0.95 
- precip  excl     emmean    SE     df lower.CL upper.CL .group
- RO      Control -2.2179 0.601 206392   -3.396   -1.040  a    
- RO      Ants    -1.7318 0.601 206392   -2.910   -0.554   b   
- RO      Rodents -1.7260 0.601 206392   -2.904   -0.548   b   
- RO      Total   -1.6886 0.601 206392   -2.866   -0.511   b   
- Control Control  0.0808 0.601 206392   -1.097    1.258    c  
- IR      Control  0.2024 0.601 206392   -0.975    1.380    cd 
- Control Ants     0.5670 0.601 206392   -0.610    1.744     de
- Control Rodents  0.5728 0.601 206392   -0.604    1.750     de
- Control Total    0.6102 0.601 206392   -0.567    1.787     de
- IR      Ants     0.6886 0.601 206392   -0.489    1.866      e
- IR      Rodents  0.6944 0.601 206392   -0.483    1.872      e
- IR      Total    0.7318 0.601 206392   -0.445    1.909      e
+ precip  excl    emmean   SE     df lower.CL upper.CL .group
+ RO      Control -4.980 2.07 206390    -9.04   -0.921  a    
+ RO      Ants    -4.342 2.07 206390    -8.40   -0.282   b   
+ RO      Rodents -4.317 2.07 206390    -8.38   -0.258   b   
+ RO      Total   -4.225 2.07 206390    -8.28   -0.166   b   
+ Control Control -1.906 2.07 206390    -5.97    2.153    c  
+ IR      Control -1.693 2.07 206390    -5.75    2.366    cd 
+ Control Ants    -1.268 2.07 206390    -5.33    2.792     de
+ Control Rodents -1.243 2.07 206390    -5.30    2.816     de
+ Control Total   -1.151 2.07 206390    -5.21    2.908     de
+ IR      Ants    -1.054 2.07 206390    -5.11    3.005      e
+ IR      Rodents -1.029 2.07 206390    -5.09    3.030      e
+ IR      Total   -0.938 2.07 206390    -5.00    3.121      e
 
 Results are given on the logit (not the response) scale. 
 Confidence level used: 0.95 

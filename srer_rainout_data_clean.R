@@ -16,7 +16,7 @@ str(seedlings_1)
 
 seedlings_1_clean <- seedlings_1 %>%
   # select all columns except date of most recent collection
-  select(-c("2020-08-29")) %>% 
+  dplyr::select(-c("2020-08-29")) %>% 
   # convert wide data format to long, excluding all but date columns,
   # creating a new "date" column from headers and new "recruit" column of values
   pivot_longer(cols = -c(block, precip, clip, excl, side, rep),
@@ -27,7 +27,7 @@ seedlings_1_clean <- seedlings_1 %>%
          # recode recruit values to fix data entry typos and make the dead
          # seedlings to be coded as "2" (recruited = 1, no germination = 0)
          # X in HerbX means seedling had herbivory occur and then died
-         recruit = recode(recruit,
+         recruit = dplyr::recode(recruit,
                           "1-herbX" = "1-HerbX",
                           "1-Herbx" = "1-HerbX",
                           "Died" = "2")) %>%
@@ -35,7 +35,7 @@ seedlings_1_clean <- seedlings_1 %>%
   # as the separator
   separate(recruit, c("fate", "herbivory"), "-", fill = "warn") %>% 
   # make herbivory a factor and replace NAs from above with "0" noting no
-  # herbivory occured
+  # herbivory occurred
   mutate(herbivory = as.factor(replace_na(herbivory, 0)),
          # recode herbivory values so 0 = no herbivory, 1 = herbivory,
          # 2 = herbivory and died from it

@@ -381,27 +381,27 @@ precip_cont_surv_df_1 <- seedlings_obs %>%
   group_by(cohort) %>%
   filter(cohort == "1") %>% 
   mutate(precip_cont = dplyr::recode(precip,
-                                     "Control" = "280",
-                                     "IR" = "462",
-                                     "RO" = "98")) %>% 
+                                     "Control" = "339",
+                                     "IR" = "559",
+                                     "RO" = "119")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
 precip_cont_surv_df_2 <-seedlings_obs %>% 
   group_by(cohort) %>%
   filter(cohort == "2") %>% 
   mutate(precip_cont = dplyr::recode(precip,
-                                     "Control" = "330",
-                                     "IR" = "545",
-                                     "RO" = "115")) %>% 
+                                     "Control" = "536",
+                                     "IR" = "884",
+                                     "RO" = "188")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
 precip_cont_surv_df_3 <-seedlings_obs %>% 
   group_by(cohort) %>%
   filter(cohort == "3") %>% 
   mutate(precip_cont = dplyr::recode(precip,
-                                     "Control" = "292",
-                                     "IR" = "482",
-                                     "RO" = "102")) %>% 
+                                     "Control" = "569",
+                                     "IR" = "939",
+                                     "RO" = "199")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
 # combine into one dataframe
@@ -436,7 +436,7 @@ ggeff_pred_ppt_fig <- as.data.frame(mydf) %>%
   labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  scale_x_continuous(breaks = c(0, 150,250, 350, 450, 550, 650, 750, 850, 950), limits = c(0, 950))+
   ylim(0, 60) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)

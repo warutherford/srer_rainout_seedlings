@@ -35,6 +35,7 @@ glimpse(seedlings_obs)
 tot_surv <- seedlings_obs %>% 
   group_by(precip, cohort, date) %>% 
   summarise(mean_surv = mean(survival),
+            count_surv = sum(survival),
             sd_surv = sd(survival),
             counts = n(),
             se_surv = (sd_surv/sqrt(counts))) %>%
@@ -162,21 +163,21 @@ line_mean_surv_archer <- surv_small_all %>%
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
-  ggplot(aes(x = date, y = 10*mean_surv, group = cohort, color = precip)) + 
+  ggplot(aes(x = date, y = count_surv, group = cohort, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   #scale_y_continuous(breaks = seq(0, 120, 10), expand = c(0.02,0)) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
-  geom_line(aes(linetype = cohort), stat = "identity", size = 1) + 
+  geom_line(aes(linetype = cohort), stat = "identity", size = 2) + 
   scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
-  ylim(0, 100) +
-  labs(y = "Mean Survival (%)",
+  ylim(0, NA) +
+  labs(y = "Number of Seedlings",
        x = "Date (Month-Year)",
        color = "PPTx",
        linetype = "Cohort") +
   facet_wrap(~precip, ncol = 3, nrow = 1) +
-  theme_pubr(legend = "bottom", x.text.angle = 45) +
-  labs_pubr()
+  theme_pubr(legend = "top", x.text.angle = 45) +
+  labs_pubr(base_size = 30)
 
 line_mean_surv_archer
 
@@ -187,6 +188,12 @@ ggsave(filename = "Figures_Tables/seedlings/line_mean_surv_archer.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
+
+surv_small_all %>% 
+  group_by(precip, cohort) %>% 
+  summarise(max = max(count_surv),
+            min = min(count_surv))
+
 
 # calculate summary info
 tot_surv_summary <- seedlings_obs %>% 

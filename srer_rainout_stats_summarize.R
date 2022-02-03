@@ -38,6 +38,147 @@ seedlings_fate_full <- seedlings %>%
          died = "2") %>% 
   mutate(tot_germination = survival + died)
 
+seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2017-07-21" & date < "2018-07-10") # emerge to planting of cohort 2
+
+cohort1_year1 <- seedling_fate_post_co1y1 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival)) %>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(1))
+  
+seedling_fate_post_co1y2 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2018-07-10" & date < "2019-08-01") # planting of cohort 2 to planting of cohort 3
+
+cohort1_year2 <-seedling_fate_post_co1y2 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(2))
+
+seedling_fate_post_co1y3 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2019-08-01") # planting of cohort 3 to end
+
+cohort1_year3 <-seedling_fate_post_co1y3 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(3))
+
+seedling_fate_post_co2y1 <- seedlings_fate_full %>% 
+  filter(cohort == 2) %>% 
+  filter(date > "2018-07-10" & date < "2019-08-01") # planting to planting of cohort 3
+
+cohort2_year1 <-seedling_fate_post_co2y1 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(1))
+
+seedling_fate_post_co2y2 <- seedlings_fate_full %>% 
+  filter(cohort == 2) %>% 
+  filter(date > "2019-08-01") # planting of cohort three to end
+
+cohort2_year2 <-seedling_fate_post_co2y2 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(2))
+
+seedling_fate_post_co3y1 <- seedlings_fate_full %>% 
+  filter(cohort == 3) # planting of cohort 3 to end
+
+cohort3_year1 <-seedling_fate_post_co3y1 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  mutate(year = as.factor(1))
+
+surv_cohort_year <- rbind(cohort1_year1, cohort1_year2, cohort1_year3, cohort2_year1,
+                          cohort2_year2, cohort3_year1)
+
+# figure of mean survival and cohort by year of survival
+
+surv_year_fig <- surv_cohort_year  %>% 
+  group_by(cohort, precip, year) %>% 
+  summarize(survival = mean(mean)) %>% 
+  mutate(precip = recode_factor(precip,
+                              "Control" = "Ambient",
+                              "RO" = "Drought",
+                              "IR" = "Wet")) %>%
+  mutate(cohort = recode_factor(cohort,
+                                "1" = "2017",
+                                "2" = "2018",
+                                "3" = "2019")) %>%
+  # mutate(excl = recode_factor(excl, 
+  #                             "Control" = "None",
+  #                             "Ants" = "Ants Excl",
+  #                             "Rodents" = "Small Mammals Excl",
+  #                             "Total" = "All Excl")) %>% 
+  ggplot(aes(x = as.integer(year), y = survival, color = cohort)) + 
+  # geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
+  geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2) +
+  geom_point(size = 10) +
+  scale_color_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
+  labs(y = "Seedling Survival (%)",
+       x = "Year of Survival",
+       color = "Cohort") +
+  #ylim(0, 50) +
+  scale_x_continuous(breaks = c(1, 2, 3)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
+  theme_pubr(legend = "right") +
+  facet_wrap(~precip) +
+  theme(panel.spacing.x = unit(2, "lines")) +
+  labs_pubr(base_size = 30)
+
+surv_year_fig
+
+ggsave(filename = "Figures_Tables/seedlings/survival_year.tiff",
+       plot = surv_year_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
+surv_year_fig_year <- surv_cohort_year  %>% 
+  group_by(cohort, precip, year) %>% 
+  summarize(survival = mean(mean)) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "RO" = "Drought",
+                                "IR" = "Wet")) %>%
+  mutate(cohort = recode_factor(cohort,
+                                "1" = "2017",
+                                "2" = "2018",
+                                "3" = "2019")) %>%
+  # mutate(excl = recode_factor(excl, 
+  #                             "Control" = "None",
+  #                             "Ants" = "Ants Excl",
+  #                             "Rodents" = "Small Mammals Excl",
+  #                             "Total" = "All Excl")) %>% 
+  ggplot(aes(x = as.integer(as.character(cohort)), y = survival, color = precip)) + 
+  #geom_smooth(method = "glm", formula = y ~(x), se = F, size = 2) +
+  geom_point(size = 5, position = "jitter") +
+  scale_color_manual(values = c("darkgreen", "darkorange", "blue1")) +
+  labs(y = "Seedling Survival (%)",
+       x = "Cohort",
+       color = "PPTx") +
+  ylim(NA, 50) +
+  scale_x_continuous(breaks = c(2017, 2018, 2019)) +
+  theme_pubr(legend = "right") +
+  facet_wrap(~year) +
+  labs_pubr(base_size = 18)
+
+surv_year_fig_year
+
+ggsave(filename = "Figures_Tables/seedlings/survival_year_year.tiff",
+       plot = surv_year_fig_year,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+
+
 # Herbivory counts
 seedlings_herb_full <- seedlings %>% 
   group_by(block, precip, clip, excl, date, cohort) %>%

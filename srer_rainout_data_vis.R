@@ -156,28 +156,34 @@ surv_small_3 <- tot_surv %>%
 surv_small_drought <- tot_surv %>% 
   filter(precip == "RO" & date >= "2019-08-10")
 
-surv_small_all <- rbind(surv_small_1, surv_small_2, surv_small_3, surv_small_drought)
+surv_small_all <- rbind(surv_small_1, surv_small_2, surv_small_3, surv_small_drought) %>% 
+  mutate(date = as.Date(date))
 
 line_mean_surv_archer <- surv_small_all %>% 
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
-                                "RO" = "Drought", .ordered = TRUE)) %>% 
-  ggplot(aes(x = date, y = count_surv, group = cohort, color = precip)) + 
+                                "RO" = "Drought", .ordered = TRUE)) %>%
+  mutate(cohort = recode_factor(cohort,
+                                "1" = "2017 Cohort",
+                                "2" = "2018 Cohort",
+                                "3" = "2019 Cohort")) %>%
+  ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   #scale_y_continuous(breaks = seq(0, 120, 10), expand = c(0.02,0)) +
-  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") +
-  geom_line(aes(linetype = cohort), stat = "identity", size = 2) + 
-  scale_linetype_manual(values=c("solid","longdash", "dotted")) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "2.5 months") +
+  geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
+  #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
   ylim(0, NA) +
   labs(y = "Number of Seedlings",
        x = "Date (Month-Year)",
-       color = "PPTx",
-       linetype = "Cohort") +
-  facet_wrap(~precip, ncol = 3, nrow = 1) +
-  theme_pubr(legend = "top", x.text.angle = 45) +
-  labs_pubr(base_size = 30)
+       color = "PPTx") +
+  facet_wrap(~cohort, ncol = 3, nrow = 1) +
+  theme_pubr(legend = "right", x.text.angle = 45) +
+  theme(panel.spacing.x = unit(2, "lines")) +
+  labs_pubr(base_size = 24)+
+  theme(axis.text.x=element_text(size=16))
 
 line_mean_surv_archer
 

@@ -6,6 +6,7 @@
 
 # Load packages
 library(tidyverse)
+library(ggbreak)
 library(agricolae)
 library(lubridate)
 library(forcats)
@@ -394,8 +395,8 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
     label = as.factor(label)) %>% 
   ggplot(aes(x = label)) +
   geom_col(aes(y = ppt_mm, fill = year), color = "black") +
-  geom_hline(data = lines_dat, aes(yintercept = precip, group = year, color = year), size = 1.5) +
-  geom_hline(aes(yintercept = 240, color = "Long-term Mean"), size = 1.5, show.legend = TRUE) +
+  geom_hline(data = lines_dat, aes(yintercept = precip, group = year, color = year), size = 2.5) +
+  geom_hline(aes(yintercept = 240, color = "Long-term Mean"), size = 2.5, show.legend = TRUE) +
   scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0"), na.value = "") +
   scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0", "darkorange")) +
   scale_x_discrete(breaks = c("Jun-15", "Jun-25", "Jul-5", "Jul-15", "Jul-25",

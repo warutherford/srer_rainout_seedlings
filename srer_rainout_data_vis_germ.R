@@ -94,13 +94,13 @@ bar_pce_germ_fig <- tot_germ_pce %>%
   scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
   ylim(0, 80) +
   labs(y = "Seed Germination (%)",
-       x = "PPTx") +
+       x = "Precipitation Treatment") +
   theme_pubr(legend = "none") +
   facet_grid(cols = vars(clip), rows = vars(excl)) +
   labs_pubr(base_size = 24) +
   theme(legend.position="none", 
         panel.border = element_blank(), 
-        panel.spacing.x = unit(0,"line"))
+        panel.spacing.x = unit(1,"line"))
 
 bar_pce_germ_fig
 

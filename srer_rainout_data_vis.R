@@ -150,7 +150,7 @@ surv_small_2 <- tot_surv %>%
   filter(date >= "2018-07-18")
 
 surv_small_3 <- tot_surv %>% 
-  filter(cohort == 3 & precip != "RO") %>% 
+  filter(cohort == 3 & precip != "RO") %>% # to start with all max values, need to cut one more date from RO..delayed germ
   filter(date >= "2019-08-03")
 
 surv_small_drought <- tot_surv %>% 
@@ -179,7 +179,7 @@ line_mean_surv_archer <- surv_small_all %>%
   labs(y = "Number of Seedlings",
        x = "Date (Month-Year)",
        color = "PPTx") +
-  facet_wrap(~cohort, ncol = 3, nrow = 1) +
+  facet_wrap(~cohort, ncol = 3, nrow = 1, scales = "free_x") +
   theme_pubr(legend = "right", x.text.angle = 45) +
   theme(panel.spacing.x = unit(2, "lines")) +
   labs_pubr(base_size = 24)+
@@ -256,13 +256,13 @@ bar_pce_fig <- tot_surv_pce %>%
   scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
   ylim(0, 35) +
   labs(y = "Seedling Survival (%)",
-       x = "PPTx") +
+       x = "Precipitation Treatment") +
   theme_pubr(legend = "none") +
   facet_grid(cols = vars(clip), rows = vars(excl)) +
   labs_pubr(base_size = 24) +
   theme(legend.position="none", 
         panel.border = element_blank(), 
-        panel.spacing.x = unit(0,"line"))
+        panel.spacing.x = unit(1,"line"))
 
 bar_pce_fig
 

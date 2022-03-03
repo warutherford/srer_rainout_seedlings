@@ -325,7 +325,7 @@ ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
   labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  scale_x_continuous(breaks = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550), limits = c(0, 600))+
+  scale_x_continuous(breaks = c(0, 50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
   ylim(NA, 100) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)
@@ -355,7 +355,7 @@ ggeff_excl_ppt_fig <- as.data.frame(mydf_germ) %>%
   labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
+  scale_x_continuous(breaks = c(0, 50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
   ylim(0, 100) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)

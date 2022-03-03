@@ -18,6 +18,7 @@ library(emmeans)
 library(car)
 library(ggeffects)
 
+
 ### Read in seedlings data (cohorts 1-3), make all columns factor and date a date
 seedlings <- vroom("Data/seedlings_combined.csv",
                    col_select = -c(1),
@@ -436,7 +437,7 @@ ggeff_pred_ppt_fig <- as.data.frame(mydf) %>%
   labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  scale_x_continuous(breaks = c(0, 150,250, 350, 450, 550, 650, 750, 850, 950), limits = c(0, 950))+
+  scale_x_continuous(breaks = c(0,100,200,300,400,500,600,700,800,900,1000), limits = c(0, 1000))+
   ylim(0, 60) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)
@@ -465,8 +466,8 @@ ggeff_excl_ppt_fig <- as.data.frame(mydf) %>%
   labs(y = "Seedling Survival (%)",
        x = "Precipitation (mm)",
        color = "Exclusion") +
-  scale_x_continuous(breaks = c(0,50, 100,150, 200,250, 300,350, 400,450, 500, 550), limits = c(0, 550))+
-  ylim(0, 55) +
+  scale_x_continuous(breaks = c(0,100,200,300,400,500,600,700,800,900,1000), limits = c(0, 1000))+
+  ylim(0, 60) +
   theme_pubr(legend = "right")+
   labs_pubr(base_size = 24)
 

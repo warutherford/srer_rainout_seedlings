@@ -171,7 +171,7 @@ line_mean_surv_archer <- surv_small_all %>%
   ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_y_continuous(breaks = seq(0, 700, 100), expand = c(0.02,0)) +
-  scale_x_date(date_labels = "%b-%Y", date_breaks = "2.5 months") +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "2 month") +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
@@ -181,7 +181,7 @@ line_mean_surv_archer <- surv_small_all %>%
        color = "PPTx") +
   facet_wrap(~cohort, ncol = 3, nrow = 1, scales = "free_x") +
   theme_pubr(legend = "right", x.text.angle = 45) +
-  theme(panel.spacing.x = unit(2, "lines")) +
+  theme(panel.spacing.x = unit(4, "lines")) +
   labs_pubr(base_size = 24)+
   theme(axis.text.x=element_text(size=16))
 

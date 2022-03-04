@@ -146,13 +146,14 @@ ppt.aov.post <- HSD.test(ppt.aov, "year", group = FALSE, console = TRUE)
 
 # PPT figure all years
 ppt_all_fig <- ppt_final %>% 
-  group_by(week, year) %>% 
+  group_by(week) %>% 
   ggplot(aes(x = week, y = ppt_mm, fill = year)) +
   geom_col() +
   #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
   scale_x_continuous(breaks=seq(0, 52, 4)) +
   scale_y_continuous(breaks = seq(0, 110, 10), expand = c(0.01,0)) +
+  #scale_x_date(date_labels = "%b-%Y", date_breaks = "1 month") +
   #xlim(0,52)+
   labs(y = "Precipitation (mm)",
        x = "Week",
@@ -231,16 +232,17 @@ temp_parse <- temp_series %>%
   distinct(datetime, .keep_all = TRUE) %>% 
   mutate(day = as.factor(yday(datetime)),
          week = week(datetime),
-         month = as.factor(month(datetime)),
+         month = as.factor(month(datetime, label = TRUE)),
+         monthday = as.factor(mday(datetime)),
          year = as.factor(year(datetime))) %>%
   filter(year != 2020) %>% 
-  group_by(site, day, week, month, year) %>% 
-  arrange(site, year, month, week, day)
+  group_by(site, day, week, month, monthday, year) %>% 
+  arrange(site, year, month, week,monthday, day)
 
 temp_summary <- temp_parse %>% 
-  group_by(day, week, month, year) %>% 
+  group_by(day, week, monthday, month, year) %>% 
   summarise(site_temp = mean(tempC)) %>% 
-  arrange(year, month, week, day)
+  arrange(year,week,day)
 
 # stats
 hist(temp_summary$site_temp)
@@ -275,37 +277,51 @@ ggsave(filename = "Figures_Tables/environment/srer_desgr_temp.tiff",
 
 ### Combo SRER DESGR PPT and Temp
 
-site_env_all_fig <- ppt_final %>% 
+ppt_lab <- ppt_final %>% 
   group_by(week, year) %>% 
-  ggplot(aes(x = week)) +
+  mutate(label = paste(month, monthday, sep = "-"),
+         monthday = as.integer(monthday),
+         label = as.factor(label))
+
+temp_lab <- temp_summary %>% 
+  group_by(week, year) %>% 
+  mutate(label = paste(month, monthday, sep = "-"),
+         monthday = as.integer(monthday),
+         label = as.factor(label))
+
+all_env <- full_join(ppt_lab, temp_lab, by = c("label", "year"))
+
+site_env_all_fig <- all_env %>% 
+  #group_by(week.x, year) %>% 
+  ggplot(aes(x = week.x)) +
   geom_col(aes(y = ppt_mm, fill = year)) +
   #geom_hline(yintercept = 34.25, color = "darkgreen", size = 1.5) +
   geom_smooth(mapping = aes(y = site_temp, color = "#DB4325"),
               size = 1.5, 
               span = 0.07,
-              se = FALSE,
-              data = temp_summary) +
+              se = FALSE) +
   scale_color_discrete(guide = guide_legend(label = FALSE)) +
   scale_fill_manual(values = c("#b0e8f5", "#169cf0", "#0033FF")) +
-  scale_x_continuous(breaks = seq(1, 52, 3),
-                     expand = c(0,0)) +
+  scale_x_continuous(breaks = c(1, 10, 18, 27, 36, 45, 52), label = c("Jan-1", "Mar-1",
+                                                                  "May-1", "Jul-1",
+                                                                  "Sep-1","Nov-1", "Dec-31")) +
   scale_y_continuous(name = "Precipitation (mm)",
                      breaks = seq(0, 130, 10),
                      sec.axis = sec_axis(~.,
                                          name = "Mean Temperature (°C)",
                                          breaks = seq(0, 40, 10)),
                      expand = c(0.01,0)) +
-  labs(x = "Week",
+  labs(x = "Month - Day",
        fill = "Precipitation",
        color = "Temperature") +
-  facet_wrap(~year) +
+  facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "bottom", margin = TRUE, x.text.angle = 45) +
   theme(axis.title.y = element_text(hjust = 0.4,
                                     vjust = 1,
-                                    size = 14),
-        axis.title.y.right = element_text(hjust = 0.95,
+                                    size = 24),
+        axis.title.y.right = element_text(hjust = 1,
                                           vjust = 1,
-                                          size = 14)) +
+                                          size = 24)) +
   labs_pubr(base_size = 24)
   
 site_env_all_fig
@@ -399,9 +415,8 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   geom_hline(aes(yintercept = 240, color = "Long-term Mean"), size = 2.5, show.legend = TRUE) +
   scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0"), na.value = "") +
   scale_color_manual(values = c("#b0e8f5", "#0033FF", "#169cf0", "darkorange")) +
-  scale_x_discrete(breaks = c("Jun-15", "Jun-25", "Jul-5", "Jul-15", "Jul-25",
-                              "Aug-5", "Aug-15", "Aug-25", "Sep-5", "Sep-15",
-                              "Sep-25")) +
+  scale_x_discrete(breaks = c("Jun-15", "Jun-30", "Jul-15", "Jul-30",
+                             "Aug-15", "Aug-31", "Sep-15", "Sep-30")) +
   ylim(0, 350)+
   scale_y_break(breaks = c(70, 100),scales = "free", ticklabels = c(100, 105, 110), space = 0.5)+
   scale_y_break(breaks = c(110, 200), scales = "free", space = 0.5)+
@@ -412,7 +427,7 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
        yintercept = NULL) +
   facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "top", margin = T, x.text.angle = 45) +
-  theme(axis.title.y = element_text(vjust = -1)) +
+  theme(axis.title.y = element_text(vjust = -1), panel.spacing.x = unit(0.5, "inches")) +
   labs_pubr(base_size = 24)+
   guides(fill = guide_legend(override.aes = list(linetype = 0)))
 
@@ -493,15 +508,17 @@ below_soil_temp_fig <- stemp_series %>%
   group_by(precip, clip, year) %>% 
   ggplot(mapping = aes(x = week, y = dailyavg, color = clip))+
   geom_line(size = 2)+
-  scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_x_continuous(breaks = c(1, 10, 18, 27, 36, 45, 52), label = c("Jan-1", "Mar-1",
+                                                                      "May-1", "Jul-1",
+                                                                      "Sep-1","Nov-1", "Dec-31")) +
   scale_color_manual(values = c("brown","darkblue")) +
   #xlim(0,52)+
   labs(y = "Daily 5-cm Soil Temperature (°C)",
-       x = "Week",
+       x = "Month-Day",
        color = "Grazing/Clipping",
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom") +
+  theme_pubr(legend = "bottom", margin = F, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 
 below_soil_temp_fig
@@ -564,15 +581,17 @@ surface_temp_fig <- atemp_comp %>%
   group_by(precip, clip, week, year) %>% 
   ggplot(mapping = aes(x = week, y = dailyavg, color = clip)) +
   geom_line(size = 2) +
-  scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_x_continuous(breaks = c(1, 10, 18, 27, 36, 45, 52), label = c("Jan-1", "Mar-1",
+                                                                      "May-1", "Jul-1",
+                                                                      "Sep-1","Nov-1", "Dec-31")) +
   scale_color_manual(values = c("brown","darkblue")) +
   #xlim(NA, 52) +
   labs(y = "Daily Soil Suface Temperature (°C)",
-       x = "Week",
+       x = "Month - Day",
        color = "Grazing/Clipping",
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom") +
+  theme_pubr(legend = "bottom", margin = F, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 
 surface_temp_fig
@@ -639,16 +658,18 @@ light_fig <- light_comp %>%
   group_by(precip, clip, year) %>% 
   ggplot(mapping = aes(x = week, y = dailyavg_light, color = clip))+
   geom_line(size = 2)+
-  scale_x_continuous(breaks=seq(0, 52, 4)) +
+  scale_x_continuous(breaks = c(1, 10, 18, 27, 36, 45, 52), label = c("Jan-1", "Mar-1",
+                                                                      "May-1", "Jul-1",
+                                                                      "Sep-1","Nov-1", "Dec-31")) +
   scale_y_continuous(labels = scales::scientific) + 
   scale_color_manual(values = c("brown","darkblue")) +
   #xlim(0,52)+
   labs(y = "Daily Light (lux)",
-       x = "Week",
+       x = "Month - Day",
        color = "Grazing/Clipping",
        linetype = "Year") +
   facet_wrap(~precip+year, scales = "free_x") +
-  theme_pubr(legend = "bottom") +
+  theme_pubr(legend = "bottom", margin = F, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 
 light_fig
@@ -699,17 +720,24 @@ sm_parse <- sm_clean %>%
   group_by(precip, month, monthday, year) %>% 
   summarise(sm_mean = mean(moisture))
 
-sm_summary <- sm_parse %>% 
-  group_by(precip) %>% 
+sm_good <- sm_parse %>%  filter(precip != "IR" | year != "2018")
+
+sm_replace <- sm_parse %>% 
+  filter(precip == "IR" & year == "2018" & month > "May")
+
+sm_fix <- rbind(sm_good, sm_replace)
+
+sm_summary <- sm_fix %>% 
+  group_by(precip, year) %>% 
   summarise(sm_mean_year = mean(sm_mean))
 
-sm_fig <- sm_parse %>% 
+sm_fig <- sm_fix %>% 
   group_by(precip, month, monthday, year) %>% 
   mutate(label = paste(month, monthday, sep = "-"),
          monthday = as.integer(monthday),
          label = as.factor(label)) %>% 
   ggplot(aes(x = label, y = 100*sm_mean, color = precip, group = precip)) +
-  geom_smooth(span = 0.25, se = F, size = 2) +
+  geom_smooth(span = 0.3, se = F, size = 2) +
   geom_hline(data = sm_summary, aes(yintercept = 100*sm_mean_year, color = precip),
              size = 2, linetype = 2) +
   scale_color_manual(values = c("grey30", "blue1", "#ba7525"),
@@ -720,6 +748,7 @@ sm_fig <- sm_parse %>%
   labs(y = "Volumetric Water Content (%)",
        x = "Month - Day",
        color = "PPTx") +
+  facet_wrap(~year, ncol = 2) +
   theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 

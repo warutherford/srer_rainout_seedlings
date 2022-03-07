@@ -159,6 +159,8 @@ surv_small_drought <- tot_surv %>%
 surv_small_all <- rbind(surv_small_1, surv_small_2, surv_small_3, surv_small_drought) %>% 
   mutate(date = as.Date(date))
 
+range <-  c(as.Date("2017-06-01"), as.Date("2020-02-01"))
+
 line_mean_surv_archer <- surv_small_all %>% 
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
@@ -170,12 +172,12 @@ line_mean_surv_archer <- surv_small_all %>%
                                 "3" = "2019 Cohort")) %>%
   ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(breaks = seq(0, 700, 100), expand = c(0.02,0)) +
-  scale_x_date(date_labels = "%b-%Y", date_breaks = "2 month") +
+  scale_y_continuous(limits = c(0,700), breaks = seq(0, 700, 100), expand = c(0,0)) +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "2 months", expand = c(0.02,0.0), limits = range) +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
-  #ylim(0, NA) +
+  #ylim(0, 700) +
   labs(y = "Number of Seedlings",
        x = "Date (Month-Year)",
        color = "PPTx") +

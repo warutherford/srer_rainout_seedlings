@@ -36,7 +36,23 @@ seedlings_fate_full <- seedlings %>%
   rename(no_germ = "0",
          survival = "1",
          died = "2") %>% 
-  mutate(tot_germination = survival + died)
+  mutate(tot_germination = survival + died,
+         surv_perc = (100*(survival/tot_germination))) %>% 
+  mutate(surv_perc = replace_na(surv_perc, 0))
+  
+
+hist((seedlings_fate_full$surv_perc))
+
+seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2017-07-21" & date < "2018-07-10") # emerge to planting of cohort 2
+
+cohort1_year1 <- seedling_fate_post_co1y1 %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarize(mean_surv = mean(surv_perc)) %>%  # get percentage survival mean out of number that germ 
+  mutate(year = as.factor(1))
+
+cohort1_year1 %>% group_by(precip, clip, excl) %>% summarise(mean_1st = mean(mean_surv))
 
 seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
   filter(cohort == 1) %>% 
@@ -47,6 +63,8 @@ cohort1_year1 <- seedling_fate_post_co1y1 %>%
   summarize(mean = 10*mean(survival)) %>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
   mutate(year = as.factor(1))
   
+cohort1_year1 %>% group_by(precip, clip, excl) %>% summarise(mean_1st = mean(mean))
+
 seedling_fate_post_co1y2 <- seedlings_fate_full %>% 
   filter(cohort == 1) %>% 
   filter(date > "2018-07-10" & date < "2019-08-01") # planting of cohort 2 to planting of cohort 3

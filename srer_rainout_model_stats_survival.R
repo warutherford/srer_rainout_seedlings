@@ -36,7 +36,8 @@ seedlings_fate_full <- seedlings %>%
   rename(no_germ = "0",
          survival = "1",
          died = "2") %>% 
-  mutate(tot_germination = survival + died)
+  mutate(tot_germination = survival + died,
+         surv_perc = 100*(survival/tot_germination))
 
 # Herbivory counts
 seedlings_herb_full <- seedlings %>% 
@@ -68,11 +69,11 @@ seedlings_all_full <- seedlings_fate_full %>%
 
 # Histogram of variables, all zero-inflated poisson except for tot_germination
 seedlings_all_full %>% 
-  keep(is.integer) %>% 
+  keep(is.numeric) %>% 
   gather() %>% 
   ggplot(aes(value)) +
   facet_wrap(~ key, scales = "free") +
-  geom_histogram(bins = 50, binwidth = 1)
+  geom_histogram(bins = 100, binwidth = 1)
 
 glimpse(seedlings_all_full)
 summary(seedlings_all_full)
@@ -92,7 +93,9 @@ seedlings_obs <- seedlings_all_full %>%
          date = as.factor(date),
          ObsID = as.factor(ObsID),
          sampID = as.factor(sampID),
-         plotID = as.factor(plotID))
+         plotID = as.factor(plotID)) %>% 
+  mutate(surv_perc = ((survival/tot_germination))) %>% 
+  mutate(surv_perc = replace_na(surv_perc, 0))
 
 # mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
 

@@ -661,9 +661,9 @@ light_fig <- light_comp %>%
   scale_x_continuous(breaks = c(1, 10, 18, 27, 36, 45, 52), label = c("Jan-1", "Mar-1",
                                                                       "May-1", "Jul-1",
                                                                       "Sep-1","Nov-1", "Dec-31")) +
-  scale_y_continuous(labels = scales::scientific) + 
+  scale_y_continuous(limits = c(0, 180000), labels = scales::scientific) + 
   scale_color_manual(values = c("brown","darkblue")) +
-  #xlim(0,52)+
+  #ylim(0,150000)+
   labs(y = "Daily Light (lux)",
        x = "Month - Day",
        color = "Grazing/Clipping",

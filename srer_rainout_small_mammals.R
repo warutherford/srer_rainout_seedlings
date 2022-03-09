@@ -76,8 +76,8 @@ tot_surv_yr <- seedlings_obs %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = F)) %>% 
   group_by(precip, year) %>% 
-  summarise(mean_surv = mean(survival),
-            sd_surv = sd(survival),
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
             counts = n(),
             se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_surv + se_surv,
@@ -127,7 +127,7 @@ plot(rod_mod)
 # sm_surv_fig
 
 sm_surv_fig_simple <- sm_surv %>% 
-  ggplot(mapping = aes(x = rod_count, y = (10*mean_surv), color = precip)) +
+  ggplot(mapping = aes(x = rod_count, y = (100*mean_surv), color = precip)) +
   geom_point(size = 8, aes(shape = year), position = "jitter")+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "lm", formula = y ~ log(x), se = F, size = 2)+
@@ -136,7 +136,7 @@ sm_surv_fig_simple <- sm_surv %>%
        color = "PPTx",
        shape = "Year") +
   xlim(0, 300) +
-  ylim(0, 40) +
+  ylim(0, 50) +
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)
 

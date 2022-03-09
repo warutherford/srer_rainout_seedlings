@@ -438,11 +438,11 @@ ggsave(filename = "Figures_Tables/bar_alltx_surv.tiff",
        units = "in",
        compression = "lzw")
 
-# create data set for precip and clip
-tot_surv_pc <- seedlings_obs %>%
+# create data set for precip and excl, by cohort
+tot_surv_pe <- seedlings_obs %>%
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
-  group_by(precip, clip) %>% 
+  group_by(precip, excl, cohort) %>% 
   summarise(mean_surv = 100*mean(surv_perc),
             sd_surv = 100*sd(surv_perc),
             counts = n(),
@@ -450,24 +450,24 @@ tot_surv_pc <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
-bar_clip_fig <- tot_surv_pc %>%
+bar_excl_fig <- tot_surv_pe %>%
   mutate(precip = recode_factor(precip,
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
-  ggplot(mapping = aes(x = clip, y = mean_surv, fill = clip)) +
+  ggplot(mapping = aes(x = precip, y = mean_surv, fill = precip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("brown","darkorange")) +
-  scale_x_discrete(labels = c("Clipped","Unclipped")) +
-  ylim(0, 40) +
+  #scale_fill_manual(values = c("brown","darkorange")) +
+  #scale_x_discrete(labels = c("Clipped","Unclipped")) +
+  #ylim(0, 50) +
   labs(y = "Seedling Survival (%)",
        x = "") +
   theme_pubr(legend = "none") +
-  facet_wrap(~precip)+
+  facet_grid(rows = vars(cohort), cols = vars(excl), scales = "free") +
   labs_pubr(base_size = 24)
 
-bar_clip_fig
+bar_excl_fig
 
 ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        plot = bar_clip_fig,

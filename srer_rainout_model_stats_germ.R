@@ -76,7 +76,10 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.germ.full <- glmmTMB(tot_germination ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.full <- glmmTMB(tot_germination ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl + cohort +
+                               precip/cohort + precip/clip/cohort + precip/excl/cohort + excl/clip/cohort + excl/cohort + clip/cohort +
+                               precip/clip/excl/cohort +
+                               (1|sampID) + ar1(date + 0|cohort),
                              data = seedlings_obs_germ,
                              family = binomial(link = "logit"))
 zi.srer.germ.full.sum <- summary(zi.srer.germ.full)

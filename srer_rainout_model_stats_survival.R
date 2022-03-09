@@ -37,7 +37,8 @@ seedlings_fate_full <- seedlings %>%
          survival = "1",
          died = "2") %>% 
   mutate(tot_germination = survival + died,
-         surv_perc = 100*(survival/tot_germination))
+         surv_perc = (survival/tot_germination)) %>% 
+         mutate(surv_perc = replace_na(surv_perc, 0))
 
 # Herbivory counts
 seedlings_herb_full <- seedlings %>% 
@@ -93,9 +94,7 @@ seedlings_obs <- seedlings_all_full %>%
          date = as.factor(date),
          ObsID = as.factor(ObsID),
          sampID = as.factor(sampID),
-         plotID = as.factor(plotID)) %>% 
-  mutate(surv_perc = ((survival/tot_germination))) %>% 
-  mutate(surv_perc = replace_na(surv_perc, 0))
+         plotID = as.factor(plotID))
 
 # mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
 
@@ -267,7 +266,7 @@ anova(zi.srer.surv.pce, zi.srer.surv.pe) # yes
 
 # final PRVE seedlings survival model will precipitation and exclusion as only fixed factors
 zi.srer.surv.final <- glmmTMB(survival ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                        data = seedlings_obs,
+                        data = seedlings_obs_year,
                         ziformula = ~.,
                         family = poisson())
 zi.srer.surv.final.sum <- summary(zi.srer.surv.final)
@@ -381,7 +380,7 @@ write.csv(seedlings_obs, file = "Data/seedlings_obs.csv", row.names = FALSE)
 # sink()
 
 # Visualization: treatment ppt values with ggeffects
-precip_cont_surv_df_1 <- seedlings_obs %>% 
+precip_cont_surv_df_1 <- seedlings_obs_year %>% 
   group_by(cohort) %>%
   filter(cohort == "1") %>% 
   mutate(precip_cont = dplyr::recode(precip,
@@ -390,7 +389,7 @@ precip_cont_surv_df_1 <- seedlings_obs %>%
                                      "RO" = "119")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-precip_cont_surv_df_2 <-seedlings_obs %>% 
+precip_cont_surv_df_2 <-seedlings_obs_year %>% 
   group_by(cohort) %>%
   filter(cohort == "2") %>% 
   mutate(precip_cont = dplyr::recode(precip,
@@ -399,7 +398,7 @@ precip_cont_surv_df_2 <-seedlings_obs %>%
                                      "RO" = "188")) %>% 
   mutate(precip_cont = as.numeric(as.character(precip_cont)))
 
-precip_cont_surv_df_3 <-seedlings_obs %>% 
+precip_cont_surv_df_3 <-seedlings_obs_year %>% 
   group_by(cohort) %>%
   filter(cohort == "3") %>% 
   mutate(precip_cont = dplyr::recode(precip,
@@ -412,9 +411,11 @@ precip_cont_surv_df_3 <-seedlings_obs %>%
 precip_cont_surv_df <- rbind(precip_cont_surv_df_1, precip_cont_surv_df_2, precip_cont_surv_df_3)
 
 # make ppt a factor for model
-precip_cont_surv_df <- precip_cont_surv_df %>% mutate(precip_cont = as.factor(precip_cont))
+precip_cont_surv_df_1y <- precip_cont_surv_df %>% 
+  filter(year == 1) %>% 
+  mutate(precip_cont = as.factor(precip_cont))
 
-zi.srer.surv.cont <- glmmTMB(survival ~ precip_cont + excl + (1|cohort) + (1|sampID),
+zi.srer.surv.cont <- glmmTMB(survival ~ precip_cont + excl + (1|cohort/year) + (1|sampID),
                               data = precip_cont_surv_df,
                               ziformula = ~.,
                               family = poisson())

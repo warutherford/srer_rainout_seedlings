@@ -101,8 +101,8 @@ tot_surv_yr <- seedlings_obs %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = F)) %>% 
   group_by(precip, clip, year) %>% 
-  summarise(mean_surv = mean(survival),
-            sd_surv = sd(survival),
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
             counts = n(),
             se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_surv + se_surv,
@@ -131,8 +131,8 @@ seed_surv <- seedlings_obs %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = F)) %>% 
   group_by(precip, year) %>% 
-  summarise(mean_surv = mean(survival),
-            sd_surv = sd(survival),
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
             counts = n(),
             se_surv = (sd_surv/sqrt(counts))) %>%
   mutate(upper = mean_surv + se_surv,
@@ -155,7 +155,7 @@ surv_ants_gp
 
 # create fig for just precip and year
 surv_ants_gp_fig <- surv_ants_gp %>%
-  ggplot(mapping = aes(x = total_ants, y = (10*mean_surv), color = precip))+
+  ggplot(mapping = aes(x = total_ants, y = (100*mean_surv), color = precip))+
   geom_point(position = "jitter", size = 8,
              aes(shape = year))+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
@@ -164,8 +164,8 @@ surv_ants_gp_fig <- surv_ants_gp %>%
        x = "Ants Captured",
        color = "PPTx",
        shape = "Year") +
-  xlim(0, NA) +
-  ylim(0, 40) +
+  xlim(0, 2500) +
+  ylim(0, 50) +
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)
 
@@ -211,8 +211,8 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
 # stats
 # across all precip tx
 hist(surv_ants$total_ants) # looks normal
-summary(lm(mean_surv~(total_ants)*year, data = surv_ants)) #r2 = 0.73
-summary(lm(mean_surv~log(total_ants)*year, data = surv_ants))# log improves fit, r2 = 0.75  
+summary(lm(mean_surv~(total_ants)*year, data = surv_ants)) #r2 = 0.70
+summary(lm(mean_surv~log(total_ants)*year, data = surv_ants))# log improves fit, r2 = 0.72  
 
 # diagnostic plots
 ant_mod <- lm(mean_surv~log(total_ants)*year, data = surv_ants)

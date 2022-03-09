@@ -37,86 +37,107 @@ seedlings_fate_full <- seedlings %>%
          survival = "1",
          died = "2") %>% 
   mutate(tot_germination = survival + died,
-         surv_perc = (100*(survival/tot_germination))) %>% 
+         surv_perc = (survival/tot_germination)) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0))
-  
 
 hist((seedlings_fate_full$surv_perc))
 
 seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
   filter(cohort == 1) %>% 
-  filter(date > "2017-07-21" & date < "2018-07-10") # emerge to planting of cohort 2
-
-cohort1_year1 <- seedling_fate_post_co1y1 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean_surv = mean(surv_perc)) %>%  # get percentage survival mean out of number that germ 
+  filter(date > "2017-07-21" & date < "2018-07-10") %>%  # emerge (2 weeks following planting) to planting of cohort 2
   mutate(year = as.factor(1))
 
-cohort1_year1 %>% group_by(precip, clip, excl) %>% summarise(mean_1st = mean(mean_surv))
-
-seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
-  filter(cohort == 1) %>% 
-  filter(date > "2017-07-21" & date < "2018-07-10") # emerge to planting of cohort 2
-
 cohort1_year1 <- seedling_fate_post_co1y1 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival)) %>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
-  mutate(year = as.factor(1))
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv) # get percentage survival mean out of number that germ 
   
-cohort1_year1 %>% group_by(precip, clip, excl) %>% summarise(mean_1st = mean(mean))
-
 seedling_fate_post_co1y2 <- seedlings_fate_full %>% 
   filter(cohort == 1) %>% 
-  filter(date > "2018-07-10" & date < "2019-08-01") # planting of cohort 2 to planting of cohort 3
-
-cohort1_year2 <-seedling_fate_post_co1y2 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  filter(date > "2018-07-10" & date < "2019-08-01") %>%  # planting of cohort 2 to planting of cohort 3
   mutate(year = as.factor(2))
 
+cohort1_year2 <-seedling_fate_post_co1y2 %>% 
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)  # get percentage survival mean out of number that germ 
+  
 seedling_fate_post_co1y3 <- seedlings_fate_full %>% 
   filter(cohort == 1) %>% 
-  filter(date > "2019-08-01") # planting of cohort 3 to end
+  filter(date > "2019-08-01") %>% # planting of cohort 3 to end
+  mutate(year = as.factor(3))
 
 cohort1_year3 <-seedling_fate_post_co1y3 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
-  mutate(year = as.factor(3))
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)   # get percentage survival mean out of number that germ 
 
 seedling_fate_post_co2y1 <- seedlings_fate_full %>% 
   filter(cohort == 2) %>% 
-  filter(date > "2018-07-10" & date < "2019-08-01") # planting to planting of cohort 3
+  filter(date > "2018-07-26" & date < "2019-08-01") %>%  # emerge to planting of cohort 3
+  mutate(year = as.factor(1))
 
 cohort2_year1 <-seedling_fate_post_co2y1 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
-  mutate(year = as.factor(1))
-
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv) # get percentage survival mean out of number that germ 
+  
 seedling_fate_post_co2y2 <- seedlings_fate_full %>% 
   filter(cohort == 2) %>% 
-  filter(date > "2019-08-01") # planting of cohort three to end
-
-cohort2_year2 <-seedling_fate_post_co2y2 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
+  filter(date > "2019-08-01") %>%  # planting of cohort three to end
   mutate(year = as.factor(2))
 
+cohort2_year2 <-seedling_fate_post_co2y2 %>% 
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv) # get percentage survival mean out of number that germ 
+  
 seedling_fate_post_co3y1 <- seedlings_fate_full %>% 
-  filter(cohort == 3) # planting of cohort 3 to end
+  filter(cohort == 3) %>% 
+  filter(date > "2019-08-17") %>%  # emerge of cohort 3 to end
+  mutate(year = as.factor(1))
 
 cohort3_year1 <-seedling_fate_post_co3y1 %>% 
-  group_by(cohort, precip, clip, excl) %>% 
-  summarize(mean = 10*mean(survival))%>%  # get percentage survival mean out of 10 planted seeds (survival/10) *100 = survival*10
-  mutate(year = as.factor(1))
+  group_by(cohort, precip, clip, excl, year) %>% 
+  summarise(mean_surv = mean(surv_perc),
+            sd_surv = sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv) # get percentage survival mean out of number that germ 
 
 surv_cohort_year <- rbind(cohort1_year1, cohort1_year2, cohort1_year3, cohort2_year1,
                           cohort2_year2, cohort3_year1)
+
+seedling_fate_year <- rbind(seedling_fate_post_co1y1, seedling_fate_post_co1y2,
+                            seedling_fate_post_co1y3, seedling_fate_post_co2y1,
+                            seedling_fate_post_co2y2, seedling_fate_post_co3y1)
 
 # figure of mean survival and cohort by year of survival
 
 surv_year_fig <- surv_cohort_year  %>% 
   group_by(cohort, precip, year) %>% 
-  summarize(survival = mean(mean)) %>% 
+  summarize(survival = mean(mean_surv)) %>% 
   mutate(precip = recode_factor(precip,
                               "Control" = "Ambient",
                               "RO" = "Drought",
@@ -130,7 +151,7 @@ surv_year_fig <- surv_cohort_year  %>%
   #                             "Ants" = "Ants Excl",
   #                             "Rodents" = "Small Mammals Excl",
   #                             "Total" = "All Excl")) %>% 
-  ggplot(aes(x = as.integer(year), y = survival, color = cohort)) + 
+  ggplot(aes(x = as.integer(year), y = 100*survival, color = cohort)) + 
   # geom_pointrange(aes(ymin = 10*lower, ymax = 10*upper, color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = F, size = 2) +
   geom_point(size = 10) +
@@ -140,7 +161,7 @@ surv_year_fig <- surv_cohort_year  %>%
        color = "Cohort") +
   #ylim(0, 50) +
   scale_x_continuous(breaks = c(1, 2, 3)) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_pubr(legend = "right") +
   facet_wrap(~precip) +
   theme(panel.spacing.x = unit(2, "lines")) +
@@ -155,47 +176,6 @@ ggsave(filename = "Figures_Tables/seedlings/survival_year.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
-
-
-surv_year_fig_year <- surv_cohort_year  %>% 
-  group_by(cohort, precip, year) %>% 
-  summarize(survival = mean(mean)) %>% 
-  mutate(precip = recode_factor(precip,
-                                "Control" = "Ambient",
-                                "RO" = "Drought",
-                                "IR" = "Wet")) %>%
-  mutate(cohort = recode_factor(cohort,
-                                "1" = "2017",
-                                "2" = "2018",
-                                "3" = "2019")) %>%
-  # mutate(excl = recode_factor(excl, 
-  #                             "Control" = "None",
-  #                             "Ants" = "Ants Excl",
-  #                             "Rodents" = "Small Mammals Excl",
-  #                             "Total" = "All Excl")) %>% 
-  ggplot(aes(x = as.integer(as.character(cohort)), y = survival, color = precip)) + 
-  #geom_smooth(method = "glm", formula = y ~(x), se = F, size = 2) +
-  geom_point(size = 5, position = "jitter") +
-  scale_color_manual(values = c("darkgreen", "darkorange", "blue1")) +
-  labs(y = "Seedling Survival (%)",
-       x = "Cohort",
-       color = "PPTx") +
-  ylim(NA, 50) +
-  scale_x_continuous(breaks = c(2017, 2018, 2019)) +
-  theme_pubr(legend = "right") +
-  facet_wrap(~year) +
-  labs_pubr(base_size = 18)
-
-surv_year_fig_year
-
-ggsave(filename = "Figures_Tables/seedlings/survival_year_year.tiff",
-       plot = surv_year_fig_year,
-       dpi = 800,
-       width = 22,
-       height = 12,
-       units = "in",
-       compression = "lzw")
-
 
 # Herbivory counts
 seedlings_herb_full <- seedlings %>% 
@@ -227,7 +207,7 @@ seedlings_all_full <- seedlings_fate_full %>%
 
 # Histogram of variables, all zero-inflated poisson except for tot_germination
 seedlings_all_full %>% 
-  keep(is.integer) %>% 
+  keep(is.numeric) %>% 
   gather() %>% 
   ggplot(aes(value)) +
   facet_wrap(~ key, scales = "free") +
@@ -241,6 +221,19 @@ describeBy(seedlings_all_full, group = "cohort")
 
 # make a new ID column for each observation and plot to test random factors
 seedlings_obs <- seedlings_all_full %>% 
+  rowid_to_column("ObsID") %>% 
+  mutate(block = as.character(block),
+         precip = as.character(precip)) %>% 
+  unite("plotID",block:precip, sep = "_", remove = FALSE) %>%
+  unite("sampID", block:excl, sep = "_", remove = FALSE) %>% 
+  mutate(block = as.factor(block),
+         precip = as.factor(precip),
+         plotID = as.factor(plotID),
+         date = as.factor(date),
+         ObsID = as.factor(ObsID),
+         sampID = as.factor(sampID))
+
+seedlings_obs_year <- seedling_fate_year %>% 
   rowid_to_column("ObsID") %>% 
   mutate(block = as.character(block),
          precip = as.character(precip)) %>% 
@@ -279,8 +272,11 @@ describeBy(seedlings_obs~excl, mat = T, digits = 4)
 
 describeBy(seedlings_obs~cohort + precip, mat = T, digits = 4)
 
-describeBy(seedlings_obs~precip+clip+excl, mat = T, digits = 4)
+t<-describeBy(seedling_fate_year~precip+clip+excl+cohort+year, mat = T, digits = 4)
 
+describeBy(seedling_fate_year~precip+cohort+year, mat = T, digits = 4)
+
+describeBy(seedling_fate_year~precip+clip+cohort+year, mat = T, digits = 4)
 
 ## get confidence intervals for each treatment and then all treatments
 # germination in percent

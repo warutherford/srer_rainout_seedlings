@@ -67,9 +67,9 @@ tot_germ_fig <- seedlings_obs_germ %>%
 tot_germ_fig
 
 
-# create data set for precip and excl and clip
+# create data set for precip and excl and cohort
 tot_germ_pce <- seedlings_obs_germ %>% 
-  group_by(precip, excl, clip) %>% 
+  group_by(precip, excl, cohort) %>% 
   summarise(mean_germ = mean(100*(tot_germination)),
             sd_germ = sd(100*(tot_germination)),
             counts = n(),
@@ -92,11 +92,11 @@ bar_pce_germ_fig <- tot_germ_pce %>%
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
   scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
   scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
-  ylim(0, 80) +
+  ylim(0, 100) +
   labs(y = "Seed Germination (%)",
        x = "Precipitation Treatment") +
   theme_pubr(legend = "none") +
-  facet_grid(cols = vars(clip), rows = vars(excl)) +
+  facet_grid(cols = vars(cohort), rows = vars(excl)) +
   labs_pubr(base_size = 24) +
   theme(legend.position="none", 
         panel.border = element_blank(), 
@@ -104,7 +104,7 @@ bar_pce_germ_fig <- tot_germ_pce %>%
 
 bar_pce_germ_fig
 
-ggsave(filename = "Figures_Tables/bar_alltx_germ.tiff",
+ggsave(filename = "Figures_Tables/bar_peco_germ.tiff",
        plot = bar_pce_germ_fig,
        dpi = 800,
        width = 22,

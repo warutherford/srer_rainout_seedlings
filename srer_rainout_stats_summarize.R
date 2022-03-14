@@ -246,6 +246,8 @@ seedlings_obs_year <- seedling_fate_year %>%
          ObsID = as.factor(ObsID),
          sampID = as.factor(sampID))
 
+#write.csv(seedlings_obs_year, file = "Data/seedlings_obs_year.csv")
+
 # mixed effects model with nesting, date (cohort) within year for temporal autocorrelation and sampling as random
 
 hist(log(seedlings_obs$survival)) # still zero-inflated

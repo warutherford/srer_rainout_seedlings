@@ -358,7 +358,31 @@ surv_small_all %>%
 
 
 # calculate summary info
-tot_surv_summary <- seedlings_obs %>% 
+# remove 2 weeks following sowing
+surv_leadup_1 <- seedlings_obs %>% 
+  filter(cohort == 1) %>% 
+  mutate(date = as.Date(date)) %>% 
+  filter(date > "2017-07-21")
+
+surv_leadup_2 <- seedlings_obs %>% 
+  filter(cohort == 2) %>% 
+  mutate(date = as.Date(date)) %>% 
+  filter(date >= "2018-07-18")
+
+surv_leadup_3 <- seedlings_obs%>% 
+  filter(cohort == 3 & precip != "RO") %>% # to start with all max values, need to cut one more date from RO..delayed germ
+  mutate(date = as.Date(date)) %>% 
+  filter(date >= "2019-08-03")
+
+surv_leadup_drought <- seedlings_obs %>% 
+  mutate(date = as.Date(date)) %>% 
+  filter(precip == "RO" & date >= "2019-08-10")
+
+surv_leadup_all <- rbind(surv_leadup_1, surv_leadup_2, surv_leadup_3, surv_leadup_drought) %>% 
+  mutate(date = as.Date(date))
+
+
+tot_surv_summary <- surv_leadup_all %>% 
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, cohort, date) %>% 
@@ -369,7 +393,7 @@ tot_surv_summary <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
-tot_surv_summary_full <- seedlings_obs %>% 
+tot_surv_summary_full <- surv_leadup_all %>% 
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, excl, clip) %>% 
@@ -380,7 +404,7 @@ tot_surv_summary_full <- seedlings_obs %>%
   mutate(upper = mean_surv + se_surv,
          lower = mean_surv - se_surv)
 
-tot_surv_summary_pcohort <- seedlings_obs %>% 
+tot_surv_summary_pcohort <- surv_leadup_all %>% 
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, cohort) %>% 
@@ -392,7 +416,7 @@ tot_surv_summary_pcohort <- seedlings_obs %>%
          lower = mean_surv - se_surv)
 
 # create data set for precip and excl and clip
-tot_surv_pce <- seedlings_obs %>% 
+tot_surv_pce <- surv_leadup_all %>% 
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, excl, clip) %>% 

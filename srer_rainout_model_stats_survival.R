@@ -88,7 +88,7 @@ seedlings_obs <- seedlings_all_full %>%
   mutate(block = as.character(block),
          precip = as.character(precip)) %>% 
   unite("sampID", block:excl, sep = "_", remove = FALSE) %>%
-  unite("plotID", block:clip, sep = "_", remove = FALSE) %>% 
+  unite("plotID", block:precip, sep = "_", remove = FALSE) %>% 
   mutate(block = as.factor(block),
          precip = as.factor(precip),
          date = as.factor(date),
@@ -96,15 +96,29 @@ seedlings_obs <- seedlings_all_full %>%
          sampID = as.factor(sampID),
          plotID = as.factor(plotID))
 
-# mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
+# remove two weeks after sowing
+seedlings_obs_year <- seedling_fate_year %>% 
+  rowid_to_column("ObsID") %>% 
+  mutate(block = as.character(block),
+         precip = as.character(precip)) %>% 
+  unite("plotID",block:precip, sep = "_", remove = FALSE) %>%
+  unite("sampID", block:excl, sep = "_", remove = FALSE) %>% 
+  mutate(block = as.factor(block),
+         precip = as.factor(precip),
+         plotID = as.factor(plotID),
+         date = as.factor(date),
+         ObsID = as.factor(ObsID),
+         sampID = as.factor(sampID))
 
-hist(log(seedlings_obs$survival)) # still zero-inflated
-hist(sqrt(seedlings_obs$survival)) # still zero-inflated
+# mixed effects model with nesting
+
+hist(log(seedlings_obs_year$survival)) # still zero-inflated
+hist(sqrt(seedlings_obs_year$survival)) # still zero-inflated
 
 # count data...poisson and zero-inflated (41% of data are zeros)
-num_obs <- seedlings_obs %>% ungroup() %>% summarise(obs = n())
+num_obs <- seedlings_obs_year %>% ungroup() %>% summarise(obs = n())
 
-zeros <- seedlings_obs %>%
+zeros <- seedlings_obs_year %>%
   ungroup() %>% 
   filter(survival == "0") %>% 
   summarise(zero = 100*(n()/num_obs$obs))
@@ -112,68 +126,15 @@ zeros <- seedlings_obs %>%
 
 #glmmTMB function to build zero-inflated model, poisson dist., random factors
 
-
-# examine possible random factors
-
-# intercept only, starting with sample ID within each cohort as random factor
-zi.srer.fix <- glmmTMB(survival ~ 1 + (1|cohort/sampID) + ar1(date + 0|cohort),
-                         data = seedlings_obs,
-                         ziformula = ~.,
-                         family = poisson)
-zi.srer.fix.sum <- summary(zi.srer.fix)
-zi.srer.fix.sum
-
-zi.srer.fix.0 <- glmmTMB(survival ~ 1 + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                       data = seedlings_obs,
-                       ziformula = ~.,
-                       family = poisson)
-zi.srer.fix.sum.0 <- summary(zi.srer.fix.0)
-zi.srer.fix.sum.0
-
-# intercept only, sample ID to account for measurement independence
-zi.srer.fix.1 <- glmmTMB(survival ~ 1 + (1|sampID) + ar1(date + 0|cohort),
-                         data = seedlings_obs,
-                         ziformula = ~.,
-                         family = poisson)
-zi.srer.fix.sum.1 <- summary(zi.srer.fix.1)
-zi.srer.fix.sum.1
-
-# intercept only, each plot ID within each cohort as random factor
-zi.srer.fix.2 <- glmmTMB(survival ~ 1 + (1|cohort/plotID) + ar1(date + 0|cohort),
-                         data = seedlings_obs,
-                         ziformula = ~.,
-                         family = poisson)
-zi.srer.fix.sum.2 <- summary(zi.srer.fix.2)
-zi.srer.fix.sum.2
-
-# intercept only, only plot ID
-zi.srer.fix.3 <- glmmTMB(survival ~ 1 + (1|plotID) + ar1(date + 0|cohort),
-                         data = seedlings_obs,
-                         ziformula = ~.,
-                         family = poisson)
-zi.srer.fix.sum.3 <- summary(zi.srer.fix.3)
-zi.srer.fix.sum.3
-
-# calculate differences b/w AIC for a number of models
-aic.compare.random <- AICtab(zi.srer.fix,
-                             zi.srer.fix.0,
-                             zi.srer.fix.1,
-                             zi.srer.fix.2,
-                             zi.srer.fix.3,
-                      logLik = TRUE)
-
-aic.compare.random
-
-# Based on AIC and Log Likelihood, and model convergence/overdispersion issues,
-# accounting for sample independence and each year plus temp 
+# accounting for sample independence and each year and date
 # are the main random factors to include in the models
-# (e.g, (1|cohort) + (1|sampID) + ar1(date + 0|cohort))
-# Thus, cohort, sample ID and temp autocorrelation are used in building final model
+# (e.g, (1|plotID/date) + (1|date))
+# Thus, plot ID and date and the date-by-plot interaction are used in building final model
 
 # test if survival sig diff across all blocks?
-zi.block <- glmmTMB(survival ~ block + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                    data = seedlings_obs,
-                    ziformula = ~.,
+zi.block <- glmmTMB(survival ~ block + (1|plotID/date) + (1|date),
+                    data = seedlings_obs_year,
+                    ziformula = ~block,
                     family = poisson())
 zi.block.sum <- summary(zi.block)
 zi.block.sum
@@ -182,23 +143,39 @@ zi.block.sum
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
-zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl + clip + excl/clip + precip/clip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                             data = seedlings_obs,
-                             ziformula = ~.,
+seed_test_1<-seedlings_obs_year %>% filter(year == 1)
+seed_test_2<-seedlings_obs_year %>% filter(year == 2)
+seed_test_3<-seedlings_obs_year %>% filter(year == 3)
+
+zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl + year +
+                               precip/year + precip/clip/year + precip/excl/year + excl/clip/year + excl/year + clip/year +
+                               precip/clip/excl/year + (1|plotID/date) + (1|date),
+                             data = seedlings_obs_year,
+                             ziformula = ~precip + clip + excl + year,
                              family = poisson())
 zi.srer.surv.full.sum <- summary(zi.srer.surv.full)
 zi.srer.surv.full.sum
 
+zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl + clip + precip/clip/excl + year +
+                               precip/year + precip/clip/year + precip/excl/year  +
+                               precip/clip/excl/year + (1|plotID/date) + (1|date),
+                             data = seedlings_obs_year,
+                             ziformula = ~survival,
+                             family = poisson())
+zi.srer.surv.full.sum <- summary(zi.srer.surv.full)
+zi.srer.surv.full.sum
+
+
 # type II wald's for fixed effect significance
-Anova(zi.srer.surv.full)
+Anova(zi.srer.surv.full, type = "II")
 
 # interactions not significant and not informative, use each tx individually
 # precipitation, clipping, and exclusion fixed factors
 # poisson model convergence issue with cohort and sample with temp autocorrelation, use neg binomial
-zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                            data = seedlings_obs,
+zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + year + (1|plotID/date) + (1|date),
+                            data = seedlings_obs_year,
                             ziformula = ~.,
-                            family = nbinom1())
+                            family = poisson())
 zi.srer.surv.pce.sum <- summary(zi.srer.surv.pce)
 zi.srer.surv.pce.sum
 
@@ -207,9 +184,9 @@ Anova(zi.srer.surv.pce)
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
-zi.srer.surv.pe <- glmmTMB(survival ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                           data = seedlings_obs,
-                           ziformula = ~.,
+zi.srer.surv.pe <- glmmTMB(survival ~ precip + excl + (1|plotID/date) + (1|date),
+                           data = seedlings_obs_year,
+                           ziformula = ~precip + excl,
                            family = poisson())
 zi.srer.surv.pe.sum <- summary(zi.srer.surv.pe)
 zi.srer.surv.pe.sum
@@ -218,9 +195,9 @@ zi.srer.surv.pe.sum
 Anova(zi.srer.surv.pe)
 
 # precipitation only fixed factor
-zi.srer.surv.p <- glmmTMB(survival ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
-                             data = seedlings_obs,
-                             ziformula = ~.,
+zi.srer.surv.p <- glmmTMB(survival ~ precip + (1|plotID/date) + (1|date),
+                             data = seedlings_obs_year,
+                             ziformula = ~precip,
                              family = poisson())
 zi.srer.surv.p.sum <- summary(zi.srer.surv.p)
 zi.srer.surv.p.sum

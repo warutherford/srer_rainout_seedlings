@@ -28,7 +28,7 @@ str(seedlings)
 # For germination data, either the seed germinated or it didn't
 # Create data frame for presence/absence (1 or 0) of germination, binomial distribution
 seedlings_germ_full <- seedlings %>% 
-  group_by(block, precip, clip, excl, side, rep, date, cohort) %>%
+  group_by(block, precip, clip, excl, date, cohort) %>%
   count(fate) %>% 
   pivot_wider(names_from = fate,
               values_from = n,
@@ -36,14 +36,14 @@ seedlings_germ_full <- seedlings %>%
   rename(no_germ = "0",
          survival = "1",
          died = "2") %>% 
-  mutate(tot_germination = (survival + died))
+  mutate(tot_germination = (survival + died)/10)
 
 # Create possible random factor variables and fix any data structures needed for modeling
 seedlings_obs_germ <- seedlings_germ_full %>% 
   mutate(block = as.character(block),
          precip = as.character(precip)) %>% 
   unite("plotID",block:precip, sep = "_", remove = FALSE) %>%
-  unite("sampID", block:rep, sep = "_", remove = FALSE) %>% 
+  unite("sampID", block:excl, sep = "_", remove = FALSE) %>% 
   mutate(block = as.factor(block),
          precip = as.factor(precip),
          plotID = as.factor(plotID),
@@ -53,33 +53,31 @@ seedlings_obs_germ <- seedlings_germ_full %>%
 # descriptive stats for each cohort 1-3
 describeBy(seedlings_obs_germ , group = "cohort")
 
-# mixed effects model with nesting, sampID as random and date (cohort) within year for temporal autocorrelation
-hist(seedlings_obs_germ$tot_germination)# binomial (0 or 1)
+hist(seedlings_obs_germ$tot_germination)
 
 #glmmTMB function to build zero-inflated model, binomial dist., random factors
 
 # Based on AIC and Log Likelihood, and model convergence/overdispersion issues,
-# accounting for sample independence and each year plus temp 
+# accounting for sample independence by each date
 # are the main random factors to include in the models
-# (e.g, (1|cohort) + (1|sampID) + ar1(date + 0|cohort))
-# Thus, cohort, sample ID and temp autocorrelation are used in building final model
+# (e.g, (1|plotID/date) + (1|date))
+# Thus, used in building final model
 # Keep same random factors as with survival model
 
 # test if tot_germination sig diff across all blocks?
-zi.block <- glmmTMB(tot_germination ~ block + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.block <- glmmTMB(tot_germination ~ block + (1|plotID/date) + (1|date),
                     data = seedlings_obs_germ,
                     family = binomial(link = "logit"))
 zi.block.sum <- summary(zi.block)
 zi.block.sum
 
-# not all blocks sig, so exclude from potential models
+# no blocks sig different, so exclude from potential models
 
 # start with full model, and make simpler
 # precipitation, clipping, and exclusion total interactions as fixed factors
 zi.srer.germ.full <- glmmTMB(tot_germination ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl + cohort +
                                precip/cohort + precip/clip/cohort + precip/excl/cohort + excl/clip/cohort + excl/cohort + clip/cohort +
-                               precip/clip/excl/cohort +
-                               (1|sampID) + ar1(date + 0|cohort),
+                               precip/clip/excl/cohort + (1|plotID/date) + (1|date),
                              data = seedlings_obs_germ,
                              family = binomial(link = "logit"))
 zi.srer.germ.full.sum <- summary(zi.srer.germ.full)
@@ -89,9 +87,8 @@ zi.srer.germ.full.sum
 Anova(zi.srer.germ.full)
 
 # interactions not all significant and not informative, use each tx individually
-# precipitation, clipping, and exclusion fixed factors
-# model convergence issue with cohort and sample with temp autocorrelation
-zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+# precipitation, clipping, exclusion, cohort fixed factors
+zi.srer.germ.pce <- glmmTMB(tot_germination ~ precip + clip + excl + (1|plotID/date) + (1|date),
                             data = seedlings_obs_germ,
                             family = binomial(link = "logit"))
 zi.srer.germ.pce.sum <- summary(zi.srer.germ.pce)
@@ -102,7 +99,7 @@ Anova(zi.srer.germ.pce)
 
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
-zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pe <- glmmTMB(tot_germination ~ precip + excl + (1|plotID/date) + (1|date),
                            data = seedlings_obs_germ,
                            family = binomial(link = "logit"))
 zi.srer.germ.pe.sum <- summary(zi.srer.germ.pe)
@@ -112,7 +109,7 @@ zi.srer.germ.pe.sum
 Anova(zi.srer.germ.pe)
 
 # precipitation only fixed factor
-zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.p <- glmmTMB(tot_germination ~ precip + (1|plotID/date) + (1|date),
                           data = seedlings_obs_germ,
                           family = binomial(link = "logit"))
 zi.srer.germ.p.sum <- summary(zi.srer.germ.p)
@@ -122,7 +119,7 @@ zi.srer.germ.p.sum
 Anova(zi.srer.germ.p)
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
-zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pe.int <- glmmTMB(tot_germination ~ precip + precip/excl + (1|plotID/date) + (1|date),
                                data = seedlings_obs_germ,
                                family = binomial(link = "logit"))
 zi.srer.germ.pe.int.sum <- summary(zi.srer.germ.pe.int)
@@ -132,7 +129,7 @@ zi.srer.germ.pe.int.sum
 Anova(zi.srer.germ.pe.int)
 
 # precipitation, clip, and precipitation and clip interaction fixed factors
-zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.pc.int <- glmmTMB(tot_germination ~ precip + precip/clip + (1|plotID/date) + (1|date),
                                data = seedlings_obs_germ,
                                family = binomial(link = "logit"))
 zi.srer.germ.pc.int.sum <- summary(zi.srer.germ.pc.int)
@@ -141,6 +138,109 @@ zi.srer.germ.pc.int.sum
 # type II wald's for fixed effect significance
 Anova(zi.srer.germ.pc.int)
 
+# add cohort
+zi.srer.germ.pcec <- glmmTMB(tot_germination ~ precip + clip + excl + cohort + (1|plotID/date) + (1|date),
+                            data = seedlings_obs_germ,
+                            family = binomial(link = "logit"))
+zi.srer.germ.pcec.sum <- summary(zi.srer.germ.pcec)
+zi.srer.germ.pcec.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pcec)
+
+# clipping not sig, remove from model
+# precipitation and exclusion fixed factors
+zi.srer.germ.pec <- glmmTMB(tot_germination ~ precip + excl + cohort + (1|plotID/date) + (1|date),
+                           data = seedlings_obs_germ,
+                           family = binomial(link = "logit"))
+zi.srer.germ.pec.sum <- summary(zi.srer.germ.pec)
+zi.srer.germ.pec.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pec)
+
+# precipitation only fixed factor
+zi.srer.germ.pco <- glmmTMB(tot_germination ~ precip + cohort + (1|plotID/date) + (1|date),
+                          data = seedlings_obs_germ,
+                          family = binomial(link = "logit"))
+zi.srer.germ.pco.sum <- summary(zi.srer.germ.pco)
+zi.srer.germ.pco.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pco)
+
+# precipitation, exclusion, and precipitation and exclusion interaction fixed factors
+zi.srer.germ.pe.int.co <- glmmTMB(tot_germination ~ precip + precip/excl + cohort + (1|plotID/date) + (1|date),
+                               data = seedlings_obs_germ,
+                               family = binomial(link = "logit"))
+zi.srer.germ.pe.int.co.sum <- summary(zi.srer.germ.pe.int.co)
+zi.srer.germ.pe.int.co.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pe.int.co)
+
+# precipitation, clip, and precipitation and clip interaction fixed factors
+zi.srer.germ.pc.int.co <- glmmTMB(tot_germination ~ precip + precip/clip + cohort + (1|plotID/date) + (1|date),
+                               data = seedlings_obs_germ,
+                               family = binomial(link = "logit"))
+zi.srer.germ.pc.int.co.sum <- summary(zi.srer.germ.pc.int.co)
+zi.srer.germ.pc.int.co.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pc.int.co)
+
+
+# add cohort interaction
+zi.srer.germ.pcec.int <- glmmTMB(tot_germination ~ precip/cohort + (1|plotID/date) + (1|date),
+                             data = seedlings_obs_germ,
+                             family = binomial(link = "logit"))
+zi.srer.germ.pcec.int.sum <- summary(zi.srer.germ.pcec.int)
+zi.srer.germ.pcec.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pcec)
+
+# clipping not sig, remove from model
+# precipitation and exclusion fixed factors
+zi.srer.germ.pec.int <- glmmTMB(tot_germination ~ excl/cohort + (1|plotID/date) + (1|date),
+                            data = seedlings_obs_germ,
+                            family = binomial(link = "logit"))
+zi.srer.germ.pec.int.sum <- summary(zi.srer.germ.pec.int)
+zi.srer.germ.pec.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pec.int)
+
+# precipitation only fixed factor
+zi.srer.germ.pco.int <- glmmTMB(tot_germination ~ clip/cohort + (1|plotID/date) + (1|date),
+                            data = seedlings_obs_germ,
+                            family = binomial(link = "logit"))
+zi.srer.germ.pco.int.sum <- summary(zi.srer.germ.pco.int)
+zi.srer.germ.pco.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pco.int)
+
+# precipitation, exclusion, and precipitation and exclusion interaction fixed factors
+zi.srer.germ.pe.int.co.int <- glmmTMB(tot_germination ~ precip/excl/cohort + (1|plotID/date) + (1|date),
+                                  data = seedlings_obs_germ,
+                                  family = binomial(link = "logit"))
+zi.srer.germ.pe.int.co.int.sum <- summary(zi.srer.germ.pe.int.co.int)
+zi.srer.germ.pe.int.co.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pe.int.co.int)
+
+# precipitation, clip, and precipitation and clip interaction fixed factors
+zi.srer.germ.pc.int.co.int <- glmmTMB(tot_germination ~ precip/clip/cohort + (1|plotID/date) + (1|date),
+                                  data = seedlings_obs_germ,
+                                  family = binomial(link = "logit"))
+zi.srer.germ.pc.int.co.int.sum <- summary(zi.srer.germ.pc.int.co.int)
+zi.srer.germ.pc.int.co.int.sum
+
+# type II wald's for fixed effect significance
+Anova(zi.srer.germ.pc.int.co.int)
+
 # compare AIC scores of all potential models for model selection
 aic.compare.final <- AICtab(zi.srer.germ.p,
                             zi.srer.germ.pe,
@@ -148,15 +248,26 @@ aic.compare.final <- AICtab(zi.srer.germ.p,
                             zi.srer.germ.full,
                             zi.srer.germ.pe.int,
                             zi.srer.germ.pc.int,
+                            zi.srer.germ.pcec,
+                            zi.srer.germ.pec,
+                            zi.srer.germ.pco,
+                            zi.srer.germ.pe.int.co,
+                            zi.srer.germ.pc.int.co,
+                            zi.srer.germ.pcec.int,
+                            zi.srer.germ.pec.int,
+                            zi.srer.germ.pco.int,
+                            zi.srer.germ.pe.int.co.int,
+                            zi.srer.germ.pc.int.co.int,
                             logLik = TRUE)
 
 aic.compare.final
 
 # does removing clipping sig improve model?
-anova(zi.srer.germ.pce, zi.srer.germ.pe) # not sig, but just pe is a more parsimonious model
+anova(zi.srer.germ.pe.int.co.int,
+      zi.srer.germ.pc.int.co.int) # not sig, but just pe is a more parsimonious model
 
 # final PRVE seedlings tot_germination model will precipitation and exclusion as only fixed factors
-zi.srer.germ.final <- glmmTMB(tot_germination ~ precip + excl + (1|cohort) + (1|sampID) + ar1(date + 0|cohort),
+zi.srer.germ.final <- glmmTMB(tot_germination ~ precip/excl/cohort + (1|plotID/date) + (1|date),
                               data = seedlings_obs_germ,
                               family = binomial(link = "logit"))
 zi.srer.germ.final.sum <- summary(zi.srer.germ.final)
@@ -232,8 +343,17 @@ hist(seedlings_obs_germ$pred_germ)
 hist(seedlings_obs_germ$tot_germination)
 
 # another method for post-hoc test of precip and exclusion 
-post.hoc <- emmeans::emmeans(best.model.germ, specs = ~precip*excl)
-post.hoc
+post.hoc <- emmeans::emmeans(best.model.germ, specs = ~precip*excl*cohort)
+post.hoc <- as.data.frame(post.hoc)
+
+#backtransform germ prob
+logit2prob <- function(logit){
+  odds <- exp(logit)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
+
+post.hoc.germ <- post.hoc %>% mutate(germ_prob = logit2prob(emmean))
 
 # get lettering report on post-hoc test
 post.hoc.letters <- cld(post.hoc, Letters = letters, covar = T)
@@ -299,22 +419,22 @@ precip_cont_germ_df_3 <-seedlings_obs_germ %>%
 
 precip_cont_germ_df <- rbind(precip_cont_germ_df_1, precip_cont_germ_df_2, precip_cont_germ_df_3)
 
-precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont))
+precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont), date = as.Date(date))
                                                       
 # germination model
-zi.srer.germ.cont <- glmmTMB(tot_germination ~ precip_cont + excl + (1|cohort) + (1|sampID),
+zi.srer.germ.cont <- glmmTMB(tot_germination/10 ~ precip_cont + excl +  (1|plotID/date) + (1|date),
                               data = precip_cont_germ_df,
                               family = binomial(link = "logit"))
 zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)
 zi.srer.germ.cont.sum
 
 # get predictions of model
-mydf_germ <- ggpredict(zi.srer.germ.cont, type = "simulate_random", terms = c("precip_cont", "excl", "cohort"))
+mydf_germ <- ggpredict(zi.srer.germ.cont, type = "simulate_random", terms = c("precip_cont", "excl"))
 
 # create graph
 ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
   mutate(excl = group,
-         cohort = facet,
+         #cohort = facet,
          precip = as.integer(as.character(x))) %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",
@@ -346,7 +466,7 @@ ggsave(filename = "Figures_Tables/pred_germ_cont.tiff",
 # by exclusion tx
 ggeff_excl_ppt_fig <- as.data.frame(mydf_germ) %>%
   mutate(excl = group,
-         cohort = facet,
+         #cohort = facet,
          precip = as.integer(as.character(x))) %>%
   mutate(excl = recode_factor(excl, 
                               "Control" = "None",

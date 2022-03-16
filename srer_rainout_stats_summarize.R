@@ -272,13 +272,13 @@ describeBy(seedlings_obs~clip, mat = T, digits = 4)
 
 describeBy(seedlings_obs~excl, mat = T, digits = 4)
 
-describeBy(seedlings_obs~cohort + precip, mat = T, digits = 4)
+describeBy(seedlings_obs_germ~precip+clip+excl+cohort, mat = T, digits = 4)
 
-t<-describeBy(seedling_fate_year~precip+clip+excl+cohort+year, mat = T, digits = 4)
+describeBy(seedling_fate_year~precip+clip+excl+cohort, mat = T, digits = 4)
 
-describeBy(seedling_fate_year~precip+cohort+year, mat = T, digits = 4)
+describeBy(seedling_fate_year~precip+cohort + year, mat = T, digits = 4)
 
-describeBy(seedling_fate_year~precip+clip+cohort+year, mat = T, digits = 4)
+describeBy(seedling_fate_year~precip+clip+excl+cohort+year, mat = T, digits = 4)
 
 ## get confidence intervals for each treatment and then all treatments
 # germination in percent
@@ -298,8 +298,8 @@ Rmisc::group.CI(100*(tot_germination/10) ~ cohort,
                 data = seedlings_obs,
                 ci = 0.95)
 
-Rmisc::group.CI(100*(tot_germination/10) ~ precip+clip+excl,
-                data = seedlings_obs,
+Rmisc::group.CI(100*(tot_germination) ~ precip+clip+excl+cohort,
+                data = seedlings_obs_germ,
                 ci = 0.95)
 
 # survival in percent

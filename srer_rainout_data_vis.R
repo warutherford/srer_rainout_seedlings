@@ -501,3 +501,51 @@ ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        units = "in",
        compression = "lzw")
 
+
+# create data set for precip and excl and clip
+tot_surv_pyc <- seedlings_obs_year %>% 
+  group_by(precip,clip, year) %>% 
+  summarise(mean_surv = 100*mean(surv_perc),
+            sd_surv = 100*sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+bar_pyc_fig <- tot_surv_pyc %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  # mutate(excl = recode_factor(excl, 
+  #                             "Control" = "None",
+  #                             "Ants" = "Ants Excl",
+  #                             "Rodents" = "Rodents Excl",
+  #                             "Total" = "Total Excl")) %>% 
+  ggplot(mapping = aes(x = precip, y = mean_surv, fill = precip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  ylim(0, 50) +
+  labs(y = "Seedling Survival (%)",
+       x = "Precipitation Treatment") +
+  theme_pubr(legend = "none") +
+  facet_grid(cols = vars(clip), rows = vars(year)) +
+  labs_pubr(base_size = 24) +
+  theme(legend.position="none", 
+        panel.border = element_blank(), 
+        panel.spacing.x = unit(1,"line"),
+        axis.title.x = element_text(vjust = 0),
+        axis.title.y = element_text(vjust = 2))
+
+bar_pyc_fig
+
+ggsave(filename = "Figures_Tables/bar_pyc_surv.tiff",
+       plot = bar_pyc_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+

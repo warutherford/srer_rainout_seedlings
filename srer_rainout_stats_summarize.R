@@ -276,7 +276,7 @@ describeBy(seedlings_obs_germ~precip+clip+excl+cohort, mat = T, digits = 4)
 
 describeBy(seedling_fate_year~precip+clip+excl+cohort, mat = T, digits = 4)
 
-describeBy(seedling_fate_year~precip+cohort + year, mat = T, digits = 4)
+describeBy(seedling_fate_year~clip + year, mat = T, digits = 4)
 
 describeBy(seedling_fate_year~precip+clip+excl+cohort+year, mat = T, digits = 4)
 

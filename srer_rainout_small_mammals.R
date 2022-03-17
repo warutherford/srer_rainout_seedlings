@@ -47,27 +47,65 @@ rod_season <- rodents %>%
 #write.csv(rod_season, file = "Data/rodents_by_season.csv")
 
 # Survival vs small mammals
-seedlings_obs <- vroom("Data/seedlings_obs.csv",
-                       col_types = c(.default = "f",
-                                     ObsID = "i",
-                                     date = "D",
-                                     survival = "i",
-                                     died = "i",
-                                     tot_germination = "i",
-                                     herb_lived = "i",
-                                     herb_died = "i",
-                                     tot_herbivory = "i",
-                                     granivory = "i",
-                                     res_surv = "d",
-                                     sim_surv = "d",
-                                     sim_fit_surv = "d",
-                                     pred_surv = "d"))
-str(seedlings_obs)
-glimpse(seedlings_obs)
+seedlings <- vroom("Data/seedlings_combined.csv",
+                   col_select = -c(1),
+                   col_types = c(.default = "f",
+                                 date = "D"))
+str(seedlings)
+
+# Fate counts
+seedlings_fate_full <- seedlings %>% 
+  group_by(block, precip, clip, excl, date, cohort) %>%
+  count(fate) %>% 
+  pivot_wider(names_from = fate,
+              values_from = n,
+              values_fill = 0) %>% 
+  rename(no_germ = "0",
+         survival = "1",
+         died = "2") %>% 
+  mutate(tot_germination = survival + died,
+         surv_perc = (survival/tot_germination)) %>% 
+  mutate(surv_perc = replace_na(surv_perc, 0))
+
+
+seedling_fate_post_co1y1 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2017-07-21" & date < "2018-07-10") %>%  # emerge (2 weeks following planting) to planting of cohort 2
+  mutate(year = as.factor(1))
+
+seedling_fate_post_co1y2 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2018-07-10" & date < "2019-08-01") %>%  # planting of cohort 2 to planting of cohort 3
+  mutate(year = as.factor(2))
+
+seedling_fate_post_co1y3 <- seedlings_fate_full %>% 
+  filter(cohort == 1) %>% 
+  filter(date > "2019-08-01") %>% # planting of cohort 3 to end
+  mutate(year = as.factor(3))
+
+seedling_fate_post_co2y1 <- seedlings_fate_full %>% 
+  filter(cohort == 2) %>% 
+  filter(date > "2018-07-26" & date < "2019-08-01") %>%  # emerge to planting of cohort 3
+  mutate(year = as.factor(1))
+
+seedling_fate_post_co2y2 <- seedlings_fate_full %>% 
+  filter(cohort == 2) %>% 
+  filter(date > "2019-08-01") %>%  # planting of cohort three to end
+  mutate(year = as.factor(2))
+
+seedling_fate_post_co3y1 <- seedlings_fate_full %>% 
+  filter(cohort == 3) %>% 
+  filter(date > "2019-08-17") %>%  # emerge of cohort 3 to end
+  mutate(year = as.factor(1))
+
+seedling_fate_year <- rbind(seedling_fate_post_co1y1, seedling_fate_post_co1y2,
+                            seedling_fate_post_co1y3, seedling_fate_post_co2y1,
+                            seedling_fate_post_co2y2, seedling_fate_post_co3y1)
+
 
 # create data set for raw survival data
-tot_surv_yr <- seedlings_obs %>%
-  mutate(year = dplyr::recode(cohort,
+tot_surv_yr <- seedling_fate_year %>%
+  mutate(cohort = dplyr::recode(cohort,
                               "1" = "2017",
                               "2" = "2018",
                               "3" = "2019"),
@@ -75,7 +113,7 @@ tot_surv_yr <- seedlings_obs %>%
                                 "Control" = "Ambient",
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = F)) %>% 
-  group_by(precip, year) %>% 
+  group_by(precip, cohort, year) %>% 
   summarise(mean_surv = mean(surv_perc),
             sd_surv = sd(surv_perc),
             counts = n(),
@@ -87,10 +125,18 @@ tot_surv_yr
 
 rod_grouped <- rod_year %>%
   group_by(year) %>% 
-  summarise(rod_count = sum(count))
+  summarise(rod_count = sum(count)) %>% 
+  rename(cohort = year)
 
-sm_surv <- full_join(rod_grouped, tot_surv_yr, by = "year")
-sm_surv 
+a<-tot_surv_yr %>% filter(year == 1) %>% left_join(rod_grouped)
+
+b<-tot_surv_yr %>% filter(year == 2 & cohort == 2017) %>% add_column(rod_count = c(112))
+
+c<-tot_surv_yr %>% filter(year == 3) %>% add_column(rod_count = c(238))
+
+d<-tot_surv_yr %>% filter(year == 2 & cohort == 2018) %>% add_column(rod_count = c(238))
+
+sm_surv <- rbind(a,b,c,d)
 
 # lin reg vs log
 # across all precip tx
@@ -99,11 +145,13 @@ glimpse(sm_surv)
 hist((sm_surv$rod_count))
 hist(log(sm_surv$rod_count)) #better
 
-summary(lm(mean_surv~(rod_count)*year, data = sm_surv)) #r2 = 0.69
-rod_mod <- lm(mean_surv~log(rod_count)*year, data = sm_surv) # log improves fit, r2 = 0.69 
+summary(lm(mean_surv~(rod_count)*year, data = sm_surv))
+rod_mod <- lm(mean_surv~log(rod_count)*year, data = sm_surv) # log improves fit
 summary(rod_mod)
 
 plot(rod_mod)
+
+two <- sm_surv %>% filter(year == 2)
 
 #mean survival vs trapped small mammals for each year and ppt?
 # sm_surv_fig <- sm_surv %>%
@@ -127,16 +175,17 @@ plot(rod_mod)
 # sm_surv_fig
 
 sm_surv_fig_simple <- sm_surv %>% 
+  filter(year == 1) %>% 
   ggplot(mapping = aes(x = rod_count, y = (100*mean_surv), color = precip)) +
-  geom_point(size = 8, aes(shape = year), position = "jitter")+
+  geom_point(size = 8, aes(shape = cohort), position = "jitter")+
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "lm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Seedling Survival (%)",
        x = "Small Mammals Captured",
        color = "PPTx",
        shape = "Year") +
-  xlim(0, 300) +
-  ylim(0, 50) +
+  xlim(0,300) +
+  ylim(0, 70) +
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)
 

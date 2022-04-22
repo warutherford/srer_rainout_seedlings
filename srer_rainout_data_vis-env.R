@@ -244,6 +244,90 @@ temp_summary <- temp_parse %>%
   summarise(site_temp = mean(tempC)) %>% 
   arrange(year,week,day)
 
+temp_min_day <- temp_summary %>% 
+  group_by(day, month, year) %>%
+  summarise(site_monthday_temp = min(site_temp)) %>%
+  arrange(year, month, day) %>% 
+  group_by(day, year) %>% 
+  summarise(site_temp_min = min(site_monthday_temp))
+
+temp_year <- temp_summary %>% 
+  group_by(year) %>% 
+  summarise(site_temp_mean = mean(site_temp))
+
+temp_min_yr <- temp_summary %>% 
+  group_by(month, year) %>%
+  summarise(site_month_temp = mean(site_temp)) %>% 
+  group_by(year) %>% 
+  summarise(site_temp_min = min(site_month_temp))
+
+temp_max_yr <- temp_summary %>% 
+  group_by(month, year) %>%
+  summarise(site_month_temp = mean(site_temp)) %>% 
+  group_by(year) %>% 
+  summarise(site_temp_max = max(site_month_temp))
+
+temp_monsoon <- temp_parse %>% 
+  group_by(month, year) %>% 
+  summarise(site_temp = mean(tempC)) %>% 
+  arrange(year,month) %>% 
+  filter(month == "Jun"| month =='Jul'|month=='Aug'|month=='Sep') %>% 
+  group_by(year) %>% 
+  summarise(site_temp_mon <- mean(site_temp))
+
+temp_min_monsoon <- temp_parse %>% 
+  group_by(month, year) %>% 
+  summarise(site_temp = mean(tempC)) %>% 
+  arrange(year,month) %>% 
+  filter(month == "Jun"| month =='Jul'|month=='Aug'|month=='Sep') %>% 
+  group_by(year) %>% 
+  summarise(site_temp_min = min(site_temp))
+
+temp_max_monsoon <- temp_parse %>% 
+  group_by(month, year) %>% 
+  summarise(site_temp = mean(tempC)) %>% 
+  arrange(year,month) %>% 
+  filter(month == "Jun"| month =='Jul'|month=='Aug'|month=='Sep') %>% 
+  group_by(year) %>% 
+  summarise(site_temp_max = max(site_temp))
+
+# long term temp from prism (1932-Feb 2020)
+temp_prism <- vroom("Data/site-env-data/prism_desgr_temp.csv",
+              col_types = c(.default = "f",
+                            date = NULL,
+                            year = "f",
+                            month = "f",
+                            tmin = "n",
+                            tmean = "n",
+                            tmax = "n"))
+
+temp_year_prism <- temp_prism %>% 
+  group_by(year) %>% 
+  summarise(site_tmin_mean = mean(tmin),
+            site_tmean_mean = mean(tmean),
+            site_tmax_mean = mean(tmax))
+
+min<-temp_prism %>% group_by(month,year) %>% summarise(min = min(tmin))
+
+long_term <- temp_year_prism %>% 
+  summarise(tmin_mean = mean(site_tmin_mean),
+         tmean_mean = mean(site_tmean_mean),
+         tmax_mean = mean(site_tmax_mean))
+
+temp_monsoon <- temp_prism %>% 
+  group_by(month, year) %>% 
+  filter(month == "6"| month =='7'|month=='8'|month=='9') %>% 
+  group_by(year) %>% 
+ summarise(site_tmin_mean = mean(tmin),
+                      site_tmean_mean = mean(tmean),
+                      site_tmax_mean = mean(tmax))
+
+long_term_monsoon <- temp_monsoon %>% 
+  summarise(tmin_mean = mean(site_tmin_mean),
+            tmean_mean = mean(site_tmean_mean),
+            tmax_mean = mean(site_tmax_mean))
+
+
 # stats
 hist(temp_summary$site_temp)
 temp.aov <- aov(site_temp~year, data = temp_summary)
@@ -309,7 +393,7 @@ site_env_all_fig <- all_env %>%
                      breaks = seq(0, 130, 10),
                      sec.axis = sec_axis(~.,
                                          name = "Mean Temperature (°C)",
-                                         breaks = seq(0, 40, 10)),
+                                         breaks = seq(0, 30, 10)),
                      expand = c(0.01,0)) +
   labs(x = "Month - Day",
        fill = "Precipitation",
@@ -410,7 +494,7 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
     monthday = as.integer(monthday),
     label = as.factor(label)) %>% 
   ggplot(aes(x = label)) +
-  geom_col(aes(y = ppt_mm, fill = year), color = "black") +
+  geom_col(aes(y = ppt_mm, fill = year), color = "black", show.legend = FALSE) +
   geom_hline(data = lines_dat, aes(yintercept = precip, group = year, color = year), size = 2.5) +
   geom_hline(aes(yintercept = 240, color = "Long-term Mean"), size = 2.5, show.legend = TRUE) +
   scale_fill_manual(values = c("#b0e8f5", "#0033FF", "#169cf0"), na.value = "") +
@@ -422,14 +506,14 @@ site_env_monsoon_fig <- site_env_monsoon_ppt %>%
   scale_y_break(breaks = c(110, 200), scales = "free", space = 0.5)+
   labs(x = "Month - Day",
        y = "PPT (mm)",
-       fill = "Daily PPT",
+       fill = NULL,
        color = "Total Monsoon PPT",
        yintercept = NULL) +
   facet_wrap(~year, strip.position = c("bottom")) +
   theme_pubr(legend = "top", margin = T, x.text.angle = 45) +
   theme(axis.title.y = element_text(vjust = -1), panel.spacing.x = unit(0.5, "inches")) +
   labs_pubr(base_size = 24)+
-  guides(fill = guide_legend(override.aes = list(linetype = 0)))
+  guides(fill = guide_legend(override.aes = list(linetype = 0), label = FALSE))
 
 site_env_monsoon_fig
 

@@ -146,8 +146,8 @@ Anova(zi.srer.germ.pc.int)
 
 # add cohort
 zi.srer.germ.pcec <- glmmTMB(tot_germination/10 ~ precip + clip + excl + cohort + (1|sampID/date),
-                            data = seedlings_obs_germ,
-                            family = binomial(link = "logit"))
+                             data = seedlings_obs_germ,
+                             family = binomial(link = "logit"))
 zi.srer.germ.pcec.sum <- summary(zi.srer.germ.pcec)
 zi.srer.germ.pcec.sum
 
@@ -157,8 +157,8 @@ Anova(zi.srer.germ.pcec)
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
 zi.srer.germ.pec <- glmmTMB(tot_germination/10 ~ precip + excl + cohort + (1|sampID/date),
-                           data = seedlings_obs_germ,
-                           family = binomial(link = "logit"))
+                            data = seedlings_obs_germ,
+                            family = binomial(link = "logit"))
 zi.srer.germ.pec.sum <- summary(zi.srer.germ.pec)
 zi.srer.germ.pec.sum
 
@@ -167,8 +167,8 @@ Anova(zi.srer.germ.pec)
 
 # precipitation only fixed factor
 zi.srer.germ.pco <- glmmTMB(tot_germination/10 ~ precip + cohort + (1|sampID/date),
-                          data = seedlings_obs_germ,
-                          family = binomial(link = "logit"))
+                            data = seedlings_obs_germ,
+                            family = binomial(link = "logit"))
 zi.srer.germ.pco.sum <- summary(zi.srer.germ.pco)
 zi.srer.germ.pco.sum
 
@@ -177,8 +177,8 @@ Anova(zi.srer.germ.pco)
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
 zi.srer.germ.pe.int.co <- glmmTMB(tot_germination/10 ~ precip + precip/excl + cohort + (1|sampID/date),
-                               data = seedlings_obs_germ,
-                               family = binomial(link = "logit"))
+                                  data = seedlings_obs_germ,
+                                  family = binomial(link = "logit"))
 zi.srer.germ.pe.int.co.sum <- summary(zi.srer.germ.pe.int.co)
 zi.srer.germ.pe.int.co.sum
 
@@ -187,8 +187,8 @@ Anova(zi.srer.germ.pe.int.co)
 
 # precipitation, clip, and precipitation and clip interaction fixed factors
 zi.srer.germ.pc.int.co <- glmmTMB(tot_germination/10 ~ precip + precip/clip + cohort + (1|sampID/date),
-                               data = seedlings_obs_germ,
-                               family = binomial(link = "logit"))
+                                  data = seedlings_obs_germ,
+                                  family = binomial(link = "logit"))
 zi.srer.germ.pc.int.co.sum <- summary(zi.srer.germ.pc.int.co)
 zi.srer.germ.pc.int.co.sum
 
@@ -198,8 +198,8 @@ Anova(zi.srer.germ.pc.int.co)
 
 # add cohort interaction
 zi.srer.germ.pcec.int <- glmmTMB(tot_germination/10 ~ precip/cohort + (1|sampID/date),
-                             data = seedlings_obs_germ,
-                             family = binomial(link = "logit"))
+                                 data = seedlings_obs_germ,
+                                 family = binomial(link = "logit"))
 zi.srer.germ.pcec.int.sum <- summary(zi.srer.germ.pcec.int)
 zi.srer.germ.pcec.int.sum
 
@@ -209,8 +209,8 @@ Anova(zi.srer.germ.pcec)
 # clipping not sig, remove from model
 # precipitation and exclusion fixed factors
 zi.srer.germ.pec.int <- glmmTMB(tot_germination/10 ~ excl/cohort + (1|sampID/date),
-                            data = seedlings_obs_germ,
-                            family = binomial(link = "logit"))
+                                data = seedlings_obs_germ,
+                                family = binomial(link = "logit"))
 zi.srer.germ.pec.int.sum <- summary(zi.srer.germ.pec.int)
 zi.srer.germ.pec.int.sum
 
@@ -219,8 +219,8 @@ Anova(zi.srer.germ.pec.int)
 
 # precipitation only fixed factor
 zi.srer.germ.pco.int <- glmmTMB(tot_germination/10 ~ clip/cohort + (1|sampID/date),
-                            data = seedlings_obs_germ,
-                            family = binomial(link = "logit"))
+                                data = seedlings_obs_germ,
+                                family = binomial(link = "logit"))
 zi.srer.germ.pco.int.sum <- summary(zi.srer.germ.pco.int)
 zi.srer.germ.pco.int.sum
 
@@ -229,8 +229,8 @@ Anova(zi.srer.germ.pco.int)
 
 # precipitation, exclusion, and precipitation and exclusion interaction fixed factors
 zi.srer.germ.pe.int.co.int <- glmmTMB(tot_germination/10 ~ precip/excl/cohort + (1|sampID/date),
-                                  data = seedlings_obs_germ,
-                                  family = binomial(link = "logit"))
+                                      data = seedlings_obs_germ,
+                                      family = binomial(link = "logit"))
 zi.srer.germ.pe.int.co.int.sum <- summary(zi.srer.germ.pe.int.co.int)
 zi.srer.germ.pe.int.co.int.sum
 
@@ -239,8 +239,8 @@ Anova(zi.srer.germ.pe.int.co.int)
 
 # precipitation, clip, and precipitation and clip interaction fixed factors
 zi.srer.germ.pc.int.co.int <- glmmTMB(tot_germination/10 ~ precip/clip/cohort + (1|sampID/date),
-                                  data = seedlings_obs_germ,
-                                  family = binomial(link = "logit"))
+                                      data = seedlings_obs_germ,
+                                      family = binomial(link = "logit"))
 zi.srer.germ.pc.int.co.int.sum <- summary(zi.srer.germ.pc.int.co.int)
 zi.srer.germ.pc.int.co.int.sum
 
@@ -249,22 +249,22 @@ Anova(zi.srer.germ.pc.int.co.int)
 
 # compare AIC scores of all potential models for model selection
 aic.compare.final.germ <- AICtab(zi.srer.germ.p,
-                            zi.srer.germ.pe,
-                            zi.srer.germ.pce,
-                            #zi.srer.germ.full,
-                            zi.srer.germ.pe.int,
-                            zi.srer.germ.pc.int,
-                            zi.srer.germ.pcec,
-                            zi.srer.germ.pec,
-                            zi.srer.germ.pco,
-                            zi.srer.germ.pe.int.co,
-                            zi.srer.germ.pc.int.co,
-                            zi.srer.germ.pcec.int,
-                            zi.srer.germ.pec.int,
-                            zi.srer.germ.pco.int,
-                            zi.srer.germ.pe.int.co.int,
-                            zi.srer.germ.pc.int.co.int,
-                            logLik = TRUE)
+                                 zi.srer.germ.pe,
+                                 zi.srer.germ.pce,
+                                 #zi.srer.germ.full,
+                                 zi.srer.germ.pe.int,
+                                 zi.srer.germ.pc.int,
+                                 zi.srer.germ.pcec,
+                                 zi.srer.germ.pec,
+                                 zi.srer.germ.pco,
+                                 zi.srer.germ.pe.int.co,
+                                 zi.srer.germ.pc.int.co,
+                                 zi.srer.germ.pcec.int,
+                                 zi.srer.germ.pec.int,
+                                 zi.srer.germ.pco.int,
+                                 zi.srer.germ.pe.int.co.int,
+                                 zi.srer.germ.pc.int.co.int,
+                                 logLik = TRUE)
 
 aic.compare.final.germ
 
@@ -426,11 +426,11 @@ precip_cont_germ_df_3 <-seedlings_obs_germ %>%
 precip_cont_germ_df <- rbind(precip_cont_germ_df_1, precip_cont_germ_df_2, precip_cont_germ_df_3)
 
 precip_cont_germ_df <- precip_cont_germ_df %>% mutate(precip_cont = as.factor(precip_cont), date = as.Date(date))
-                                                      
+
 # germination model
 zi.srer.germ.cont <- glmmTMB(tot_germination ~ precip_cont/excl/cohort + (1|sampID/date),
-                              data = precip_cont_germ_df,
-                              family = binomial(link = "logit"))
+                             data = precip_cont_germ_df,
+                             family = binomial(link = "logit"))
 zi.srer.germ.cont.sum <- summary(zi.srer.germ.cont)
 zi.srer.germ.cont.sum
 
@@ -448,8 +448,8 @@ ggeff_germ_ppt_fig <- as.data.frame(mydf_germ) %>%
                               "Rodents" = "Rodents Excl",
                               "Total" = "All Excl")) %>% 
   ggplot(aes(x = precip, y = predicted*100)) +
-  #geom_point(aes(color = excl)) +
-  geom_pointrange(aes(ymin = (100*conf.low), ymax = (100*conf.high), color = excl), size = 0.5) +
+  geom_point(aes(color = excl)) +
+  #geom_pointrange(aes(ymin = (100*conf.low), ymax = (100*conf.high), color = excl), size = 0.5) +
   geom_smooth(method = "glm", formula = y ~ log(x) + x, se = T, size = 2)+
   labs(y = "Seed Germination (%)",
        x = "Precipitation (mm)",
@@ -498,5 +498,3 @@ ggsave(filename = "Figures_Tables/pred_germ_excl_cont.tiff",
        height = 12,
        units = "in",
        compression = "lzw")
-
-

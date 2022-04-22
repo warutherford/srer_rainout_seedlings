@@ -36,7 +36,7 @@ tot_surv <- seedlings_obs %>%
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, cohort, date) %>% 
-  summarise(mean_surv = mean(surv_perc),
+  summarise(mean_surv = mean(survival/10),
             count_surv = sum(survival),
             sd_surv = sd(surv_perc),
             counts = n(),
@@ -215,15 +215,15 @@ line_mean_surv_archer <- surv_small_all %>%
                                 "1" = "2017 Cohort",
                                 "2" = "2018 Cohort",
                                 "3" = "2019 Cohort")) %>%
-  ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
+  ggplot(aes(x = date, y = 100*mean_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(limits = c(0,700), breaks = seq(0, 700, 100), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,100), breaks = seq(0, 100, 25), expand = c(0,0)) +
   scale_x_date(date_labels = "%b-%Y", date_breaks = "2.5 months", expand = c(0.03,0.03), limits = range) +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   #scale_linetype_manual(values=c("solid","longdash", "dotted")) +
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
   #ylim(0, 700) +
-  labs(y = "Number of Seedlings",
+  labs(y = "Survival (%)",
        x = "Date (Month-Year)",
        color = "PPTx") +
   facet_wrap(~cohort, ncol = 3, nrow = 1, scales = "free_x") +
@@ -260,13 +260,13 @@ line_mean_surv_archer_1 <- surv_1 %>%
                                 "RO" = "Drought", .ordered = TRUE)) %>%
   mutate(cohort = recode_factor(cohort,
                                 "1" = "2017 Cohort")) %>%
-  ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
+  ggplot(aes(x = date, y = 100*mean_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(limits = c(0,700), breaks = seq(0, 700, 100), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,100), breaks = seq(0, 100, 25), expand = c(0.1,0.1)) +
   scale_x_date(date_labels = "%b-%y", date_breaks = "2.75 months", expand = c(0.01, 0), limits = range1) +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
-  labs(y = "Number of Seedlings",
+  labs(y = "Survival (%)",
        x = NULL,
        color = "PPTx") +
   facet_wrap(~cohort) +
@@ -286,9 +286,9 @@ line_mean_surv_archer_2 <- surv_2 %>%
                                 "RO" = "Drought", .ordered = TRUE)) %>%
   mutate(cohort = recode_factor(cohort,
                                 "2" = "2018 Cohort")) %>%
-  ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
+  ggplot(aes(x = date, y = 100*mean_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(limits = c(0,700), breaks = seq(0, 700, 100), expand = c(0,0)) +
+  scale_y_continuous(limits = c(-1,100), breaks = seq(0, 100, 25), expand = c(0.1,0.1)) +
   scale_x_date(date_labels = "%b-%y", date_breaks = "2.75 months", expand = c(0.01,0), limits = range2) +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
@@ -315,9 +315,9 @@ line_mean_surv_archer_3 <- surv_3 %>%
                                 "RO" = "Drought", .ordered = TRUE)) %>%
   mutate(cohort = recode_factor(cohort,
                                 "3" = "2019 Cohort")) %>%
-  ggplot(aes(x = date, y = count_surv, group = precip, color = precip)) + 
+  ggplot(aes(x = date, y = 100*mean_surv, group = precip, color = precip)) + 
   scale_color_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_y_continuous(limits = c(0,700), breaks = seq(0, 700, 100), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,100), breaks = seq(0, 100, 25), expand = c(0.1,0.1)) +
   scale_x_date(date_labels = "%b-%y", date_breaks = "2.75 months", expand = c(0.01,0), limits = range3) +
   geom_line(aes(), stat = "identity", size = 2.5, position = "jitter") + 
   scale_fill_manual(values = c("grey30","blue1", "red1")) +
@@ -495,54 +495,6 @@ bar_excl_fig
 
 ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
        plot = bar_clip_fig,
-       dpi = 800,
-       width = 22,
-       height = 12,
-       units = "in",
-       compression = "lzw")
-
-
-# create data set for precip and excl and clip
-tot_surv_pyc <- seedlings_obs_year %>% 
-  group_by(precip,clip, year) %>% 
-  summarise(mean_surv = 100*mean(surv_perc),
-            sd_surv = 100*sd(surv_perc),
-            counts = n(),
-            se_surv = (sd_surv/sqrt(counts))) %>%
-  mutate(upper = mean_surv + se_surv,
-         lower = mean_surv - se_surv)
-
-bar_pyc_fig <- tot_surv_pyc %>%
-  mutate(precip = recode_factor(precip,
-                                "Control" = "Ambient",
-                                "IR" = "Wet",
-                                "RO" = "Drought", .ordered = TRUE)) %>% 
-  # mutate(excl = recode_factor(excl, 
-  #                             "Control" = "None",
-  #                             "Ants" = "Ants Excl",
-  #                             "Rodents" = "Rodents Excl",
-  #                             "Total" = "Total Excl")) %>% 
-  ggplot(mapping = aes(x = precip, y = mean_surv, fill = precip)) +
-  geom_bar(stat="identity", color = "black", position=position_dodge()) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
-  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
-  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
-  ylim(0, 50) +
-  labs(y = "Seedling Survival (%)",
-       x = "Precipitation Treatment") +
-  theme_pubr(legend = "none") +
-  facet_grid(cols = vars(clip), rows = vars(year)) +
-  labs_pubr(base_size = 24) +
-  theme(legend.position="none", 
-        panel.border = element_blank(), 
-        panel.spacing.x = unit(1,"line"),
-        axis.title.x = element_text(vjust = 0),
-        axis.title.y = element_text(vjust = 2))
-
-bar_pyc_fig
-
-ggsave(filename = "Figures_Tables/bar_pyc_surv.tiff",
-       plot = bar_pyc_fig,
        dpi = 800,
        width = 22,
        height = 12,

@@ -11,6 +11,7 @@ library(vroom)
 library(ggpubr)
 library(gt)
 library(glue)
+library(ggpmisc)
 
 # read in data
 rodents <- vroom("Data/Trapping_Combined_2017-2019.csv",
@@ -145,8 +146,8 @@ glimpse(sm_surv)
 hist((sm_surv$rod_count))
 hist(log(sm_surv$rod_count)) #better
 
-summary(lm(mean_surv~(rod_count)*year, data = sm_surv))
-rod_mod <- lm(mean_surv~log(rod_count)*year, data = sm_surv) # log improves fit
+summary(lm(mean_surv~(rod_count)+cohort, data = sm_surv))
+rod_mod <- lm(mean_surv~log(rod_count)+cohort, data = sm_surv) # log improves fit
 summary(rod_mod)
 
 plot(rod_mod)
@@ -186,6 +187,10 @@ sm_surv_fig_simple <- sm_surv %>%
        shape = "Year") +
   xlim(0,300) +
   ylim(0, 70) +
+  # ggpmisc::stat_poly_eq(formula = y ~ log(x), 
+  #                       aes(label =  paste(stat(eq.label),
+  #                                          stat(rr.label), stat(p.value.label), sep = "*\", \"*")),
+  #                       parse = TRUE)+
   theme_pubr(legend = c("right"))+
   labs_pubr(base_size = 24)
 

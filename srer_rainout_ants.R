@@ -11,6 +11,7 @@ library(gt)
 library(glue)
 library(ggpubr)
 library(car)
+library(ggpmisc)
 
 # read in data
 ants <- vroom("Data/ants_combined.csv",
@@ -169,6 +170,7 @@ surv_ants_gp <- surv_ants %>%
 surv_ants_gp_fig <- surv_ants_gp %>%
   group_by(precip, cohort) %>% 
   filter(year == 1) %>% 
+  #filter(precip != "Drought") %>% 
   ggplot(mapping = aes(x = total_ants, y = (100*mean_surv), color = precip))+
   geom_point(position = "jitter", size = 8,
              aes(shape = cohort))+
@@ -178,6 +180,10 @@ surv_ants_gp_fig <- surv_ants_gp %>%
        x = "Ants Captured",
        color = "PPTx",
        shape = "Year") +
+  ggpmisc::stat_poly_eq(formula = y ~ (x),
+                        aes(label =  paste(stat(eq.label),
+                                           stat(rr.label), stat(p.value.label), sep = "*\", \"*")),
+                        parse = TRUE)+
   xlim(0, 2500) +
   ylim(0, 70) +
   theme_pubr(legend = c("right"))+
@@ -225,9 +231,9 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
 # stats
 # across all precip tx
 hist(surv_ants$total_ants) # looks normal
-summary(lm(mean_surv~(total_ants)*year, data = surv_ants)) #r2 = 0.70
-summary(lm(mean_surv~log(total_ants)*year, data = surv_ants))# log improves fit, r2 = 0.72  
+summary(lm(mean_surv~(total_ants)+cohort, data = surv_ants)) #r2 = 0.24, fits drought poorly
+summary(lm(mean_surv~log(total_ants)+cohort, data = surv_ants))# log improves fit, r2 = 0.24  
 
 # diagnostic plots
-ant_mod <- lm(mean_surv~log(total_ants)*year, data = surv_ants)
+ant_mod <- lm(mean_surv~log(total_ants)*cohort, data = surv_ants)
 plot(ant_mod)

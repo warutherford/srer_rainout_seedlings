@@ -323,3 +323,11 @@ Rmisc::group.CI(100*(survival/10) ~ excl,
                 data = seedlings_obs,
                 ci = 0.95)
 
+# post hoc survival, change filters for exact tx combo for table s3
+clean <- seedling_fate_year %>% filter(year != "3") %>% filter(year == "1" & precip == "RO"&clip=="Unclipped")
+sur_mod <- aov(surv_perc~excl*cohort, data = clean)
+TukeyHSD(sur_mod)
+
+
+
+

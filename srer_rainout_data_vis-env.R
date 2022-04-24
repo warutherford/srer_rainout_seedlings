@@ -581,6 +581,8 @@ stemp_series <- stemplight %>%
 # data normal?
 hist(stemp_series$dailyavg) # looks good
 
+stemp_series %>% group_by(precip, year) %>% summarise(meant = mean(dailyavg))
+
 below_anova <- aov(dailyavg ~ precip*clip*year, data = stemp_series)
 
 summary(below_anova)
@@ -652,6 +654,8 @@ atemp_comp <- full_join(atemp_comp, gap_fix)
 # test sig diff of daily surface soil temp between treatments
 # data normal?
 hist(atemp_comp$dailyavg) # normal
+atemp_comp %>% group_by(precip, year) %>% summarise(meant = mean(dailyavg, na.rm = T))
+
 
 atemp_aov <- aov(dailyavg ~ precip*clip*year, data = atemp_comp)
 

@@ -66,8 +66,69 @@ seedlings_gran_full <- seedlings %>%
 # Joining fate, herbivory, and granivory variables of interest to one table
 seedlings_all_full <- seedlings_fate_full %>% 
   left_join(seedlings_herb_full) %>% 
-  left_join(seedlings_gran_full) %>% 
-  dplyr::select(-c(no_germ, no_herb, no_gran))
+  left_join(seedlings_gran_full) 
+# %>% 
+#   dplyr::select(-c(no_germ, no_herb, no_gran))
+
+## percent germ (relative to lab conditions), lost to abiotic constraints, lost to preds
+germ1 <- seedlings_all_full %>% 
+  filter(cohort == 1) %>% 
+  mutate(rel_germ = ((100*(tot_germination/10))*0.99)) %>% 
+  mutate(abiotic = 10*(no_germ-granivory)) %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarise(mean_gran = 10*mean(granivory),
+            sd_gran = 10*sd(granivory),
+            counts = n(),
+            se_gran = (sd_gran/sqrt(counts)),
+            mean_ab = mean(abiotic),
+            sd_ab = sd(abiotic),
+            se_ab = (sd_ab/sqrt(counts)),
+            mean_rel = mean(rel_germ),
+            sd_rel = sd(rel_germ),
+            se_rel = (sd_rel/sqrt(counts)))
+
+
+germ2 <- seedlings_all_full %>% 
+  filter(cohort == 2) %>% 
+  mutate(rel_germ = ((100*(tot_germination/10))*0.99)) %>% 
+  mutate(abiotic = 10*(no_germ-granivory)) %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarise(mean_gran = 10*mean(granivory),
+            sd_gran = 10*sd(granivory),
+            counts = n(),
+            se_gran = (sd_gran/sqrt(counts)),
+            mean_ab = mean(abiotic),
+            sd_ab = sd(abiotic),
+            se_ab = (sd_ab/sqrt(counts)),
+            mean_rel = mean(rel_germ),
+            sd_rel = sd(rel_germ),
+            se_rel = (sd_rel/sqrt(counts)))
+
+germ3 <- seedlings_all_full %>% 
+  filter(cohort == 3) %>% 
+  mutate(rel_germ = ((100*(tot_germination/10))*0.99)) %>% 
+  mutate(abiotic = 10*(no_germ-granivory)) %>% 
+  group_by(cohort, precip, clip, excl) %>% 
+  summarise(mean_gran = 10*mean(granivory),
+            sd_gran = 10*sd(granivory),
+            counts = n(),
+            se_gran = (sd_gran/sqrt(counts)),
+            mean_ab = mean(abiotic),
+            sd_ab = sd(abiotic),
+            se_ab = (sd_ab/sqrt(counts)),
+            mean_rel = mean(rel_germ),
+            sd_rel = sd(rel_germ),
+            se_rel = (sd_rel/sqrt(counts)))
+
+germ_full <- rbind(germ1,germ2,germ3)
+
+germ_clean <- germ_full %>% dplyr::select(-sd_gran, -counts, -sd_ab, -mean_rel, -sd_rel,-se_rel) %>%
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "None",
+                              "Rodents" = "Ants Excl",
+                              "Ants" = "Rodents Excl",
+                              "Total" = "Total Excl"))
+  
 
 # Histogram of variables, all zero-inflated poisson except for tot_germination
 seedlings_all_full %>% 

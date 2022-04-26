@@ -237,3 +237,10 @@ summary(lm(mean_surv~log(total_ants)+cohort, data = surv_ants))# log improves fi
 # diagnostic plots
 ant_mod <- lm(mean_surv~log(total_ants)*cohort, data = surv_ants)
 plot(ant_mod)
+
+# insig outside of 1st year survival
+ant_mod_2 <- aov(mean_surv~log(total_ants)+year, data = surv_ants)
+summary(ant_mod_2)
+
+post_ant <- HSD.test(ant_mod_2, "year")
+post_ant

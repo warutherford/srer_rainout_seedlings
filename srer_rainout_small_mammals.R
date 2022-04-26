@@ -152,7 +152,12 @@ summary(rod_mod)
 
 plot(rod_mod)
 
-two <- sm_surv %>% filter(year == 2)
+# insig outside of 1st year survival
+rod_mod_2 <- aov(mean_surv~log(rod_count)+year, data = sm_surv)
+summary(rod_mod_2)
+
+post_rod <- HSD.test(rod_mod_2, "year")
+post_rod
 
 #mean survival vs trapped small mammals for each year and ppt?
 # sm_surv_fig <- sm_surv %>%

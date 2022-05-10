@@ -276,10 +276,10 @@ Anova(zi.srer.surv.1)
 Anova(zi.srer.surv.2)
 Anova(zi.srer.surv.3)
 
-post.hoc.full <- emmeans::emmeans(zi.srer.surv.1, specs = ~cohort*excl*precip, type = "response")
+post.hoc.full <- emmeans::emmeans(zi.srer.surv.full, specs = ~clip*year, type = "response")
 
 # get lettering report on post-hoc test
-post.hoc.letters.full <- cld(post.hoc.full, Letters = letters, covar = T)
+post.hoc.letters.full <- cld(post.hoc.full, Letters = letters, covar = T, level = 0.0001)
 post.hoc.letters.full
 
 post.hoc.surv <- as.data.frame(post.hoc.full) %>% mutate(surv_per = 10*rate)

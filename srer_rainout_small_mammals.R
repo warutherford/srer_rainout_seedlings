@@ -187,7 +187,7 @@ sm_surv_fig_simple <- sm_surv %>%
   scale_color_manual(values = c("grey30","blue1","#ba7525")) +
   geom_smooth(method = "lm", formula = y ~ log(x), se = F, size = 2)+
   labs(y = "Seedling Survival (%)",
-       x = "Small Mammals Captured",
+       x = "Rodents Captured",
        color = "PPTx",
        shape = "Year") +
   xlim(0,300) +

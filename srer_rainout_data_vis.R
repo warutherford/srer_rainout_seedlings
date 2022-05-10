@@ -488,7 +488,7 @@ bar_excl_fig <- tot_surv_pe %>%
   labs(y = "Seedling Survival (%)",
        x = "") +
   theme_pubr(legend = "none") +
-  facet_grid(rows = vars(cohort), cols = vars(excl), scales = "free") +
+  facet_grid(rows = vars(cohort), cols = vars(clip), scales = "free") +
   labs_pubr(base_size = 24)
 
 bar_excl_fig

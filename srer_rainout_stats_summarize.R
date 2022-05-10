@@ -327,7 +327,3 @@ Rmisc::group.CI(100*(survival/10) ~ excl,
 clean <- seedling_fate_year %>% filter(year != "3") %>% filter(year == "1" & precip == "RO"&clip=="Unclipped")
 sur_mod <- aov(surv_perc~excl*cohort, data = clean)
 TukeyHSD(sur_mod)
-
-
-
-

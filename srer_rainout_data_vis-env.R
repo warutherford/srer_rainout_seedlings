@@ -256,16 +256,22 @@ temp_year <- temp_summary %>%
   summarise(site_temp_mean = mean(site_temp))
 
 temp_min_yr <- temp_summary %>% 
-  group_by(month, year) %>%
+  group_by(day, year) %>%
   summarise(site_month_temp = mean(site_temp)) %>% 
   group_by(year) %>% 
   summarise(site_temp_min = min(site_month_temp))
 
 temp_max_yr <- temp_summary %>% 
-  group_by(month, year) %>%
+  group_by(day, year) %>%
   summarise(site_month_temp = mean(site_temp)) %>% 
   group_by(year) %>% 
   summarise(site_temp_max = max(site_month_temp))
+
+temp_summary %>% 
+  ggplot(aes(x = day, y = site_temp, group = year, color = year)) + 
+  geom_line()+
+  facet_wrap(~year)+
+  theme_pubr()
 
 temp_monsoon <- temp_parse %>% 
   group_by(month, year) %>% 
@@ -836,7 +842,7 @@ sm_fig <- sm_fix %>%
   labs(y = "Volumetric Water Content (%)",
        x = "Month - Day",
        color = "PPTx") +
-  facet_wrap(~year, ncol = 2) +
+  facet_wrap(~year, ncol = 2, strip.position = "bottom") +
   theme_pubr(legend = "right", margin = TRUE, x.text.angle = 45) +
   labs_pubr(base_size = 24)
 

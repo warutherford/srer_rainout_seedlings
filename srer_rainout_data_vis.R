@@ -493,7 +493,9 @@ bar_excl_fig <- tot_surv_pe %>%
 
 bar_excl_fig
 
-tot_surv_pc <- seedlings_obs_year %>%
+
+# create data set for precip and clip, by survival year
+tot_surv_pc <- seedlings_obs_year %>% # seedslings_obs_year created in 'srer_rainour_stas_summarize' script
   mutate(surv_perc = ((survival/tot_germination))) %>% 
   mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
   group_by(precip, clip, year) %>% 

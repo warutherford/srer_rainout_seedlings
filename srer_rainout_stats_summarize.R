@@ -327,3 +327,44 @@ Rmisc::group.CI(100*(survival/10) ~ excl,
 clean <- seedling_fate_year %>% filter(year != "3") %>% filter(year == "1" & precip == "RO"&clip=="Unclipped")
 sur_mod <- aov(surv_perc~excl*cohort, data = clean)
 TukeyHSD(sur_mod)
+
+# create data set for precip and clip, by survival year
+tot_surv_pc <- seedlings_obs_year %>%
+  mutate(surv_perc = ((survival/tot_germination))) %>% 
+  mutate(surv_perc = replace_na(surv_perc, 0)) %>% 
+  group_by(precip, clip, year) %>% 
+  summarise(mean_surv = 100*mean(surv_perc),
+            sd_surv = 100*sd(surv_perc),
+            counts = n(),
+            se_surv = (sd_surv/sqrt(counts))) %>%
+  mutate(upper = mean_surv + se_surv,
+         lower = mean_surv - se_surv)
+
+bar_clip_fig <- tot_surv_pc %>%
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  ggplot(mapping = aes(x = precip, y = mean_surv, fill = precip)) +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  ylim(0, 50) +
+  labs(y = "Seedling Survival (%)",
+       x = "") +
+  theme_pubr(legend = "none") +
+  facet_grid(rows = vars(year), cols = vars(clip), scales = "free") +
+  labs_pubr(base_size = 24)
+
+bar_clip_fig
+
+
+ggsave(filename = "Figures_Tables/bar_clip_surv.tiff",
+       plot = bar_clip_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
+

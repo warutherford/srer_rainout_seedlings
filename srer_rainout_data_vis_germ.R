@@ -84,7 +84,7 @@ bar_pce_germ_fig_c <- tot_germ_pce %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   mutate(excl = recode_factor(excl, 
-                              "Control" = "Total Excl",
+                              "Control" = "All Excl",
                               "Ants" = "Rodents Excl",
                               "Rodents" = "Ants Excl",
                               "Total" = "None")) %>% 
@@ -120,10 +120,10 @@ bar_pce_germ_fig_uc <- tot_germ_pce %>%
                                 "IR" = "Wet",
                                 "RO" = "Drought", .ordered = TRUE)) %>% 
   mutate(excl = recode_factor(excl, 
-                              "Control" = "Total Excl",
-                              "Ants" = "Rodents Excl",
+                              "Control" = "All Excl",
+                              "Ants" = "RodentsExcl",
                               "Rodents" = "Ants Excl",
-                              "Total" = "None")) %>% 
+                              "Total" = "None"))
   ggplot(mapping = aes(x = precip, y = mean_germ, fill = precip)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +

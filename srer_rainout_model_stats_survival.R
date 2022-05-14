@@ -123,11 +123,11 @@ germ3 <- seedlings_all_full %>%
 germ_full <- rbind(germ1,germ2,germ3)
 
 germ_clean <- germ_full %>% dplyr::select(-sd_gran, -counts, -sd_ab, -mean_rel, -sd_rel,-se_rel) %>%
-  mutate(excl = recode_factor(excl, 
-                              "Control" = "None",
+  mutate(excl = recode_factor(excl, # coded based on access, control = all excl, total = no excl
+                              "Control" = "Total",
                               "Rodents" = "Ants Excl",
                               "Ants" = "Rodents Excl",
-                              "Total" = "Total Excl"))
+                              "Total" = "None"))
   
 
 # Histogram of variables, all zero-inflated poisson except for tot_germination
@@ -219,29 +219,7 @@ zi.srer.surv.full <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl
 zi.srer.surv.full.sum <- summary(zi.srer.surv.full)
 zi.srer.surv.full.sum
 
-
-# zi.srer.surv.1 <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl+ (1|sampID/cohort/date),
-#                           data = seed_test_1,
-#                           ziformula = ~1,
-#                           family = poisson())
-# zi.srer.surv.1.sum <- summary(zi.srer.surv.1)
-# zi.srer.surv.1.sum
-# 
-# zi.srer.surv.2 <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + excl/clip + excl + clip + precip/clip/excl + (1|sampID/cohort/date),
-#                           data = seed_test_2,
-#                           ziformula = ~1,
-#                           family = poisson())
-# zi.srer.surv.2.sum <- summary(zi.srer.surv.2)
-# zi.srer.surv.2.sum
-# 
-# zi.srer.surv.3 <- glmmTMB(survival ~ precip + precip/clip+ precip/excl +
-#                             excl/clip + excl + clip + precip/clip/excl + (1|sampID/date),
-#                           data = seed_test_3,
-#                           ziformula = ~1,
-#                           family = poisson())
-# zi.srer.surv.3.sum <- summary(zi.srer.surv.3)
-# zi.srer.surv.3.sum
-
+# model for each year of survival
 zi.srer.surv.1 <- glmmTMB(survival ~ precip + precip/clip+ precip/excl + clip/excl + excl + clip + precip/clip/excl + cohort +
                                precip/cohort + precip/clip/cohort + precip/excl/cohort + excl/clip/cohort + excl/cohort + clip/cohort +
                                precip/clip/excl/cohort +(1|sampID) + ar1(date + 0|cohort),
@@ -284,7 +262,7 @@ post.hoc.letters.full
 
 post.hoc.surv <- as.data.frame(post.hoc.full) %>% mutate(surv_per = 10*rate)
 
-# interactions not significant and not informative, use each tx individually
+# use first year for ppt modeling
 # precipitation, clipping, and exclusion fixed factors
 # poisson model convergence issue with cohort and sample with temp autocorrelation, use neg binomial
 zi.srer.surv.pce <- glmmTMB(survival ~ precip + clip + excl + (1|sampID) + ar1(date + 0|cohort),
@@ -657,7 +635,7 @@ mydf <- ggpredict(zi.srer.surv.cont, type = "simulate_random", terms = c("precip
 ggeff_pred_ppt_fig <- as.data.frame(mydf) %>%
   mutate(excl = group, #cohort = facet,
          x = as.numeric(as.character(x))) %>%
-  mutate(excl = recode_factor(excl, 
+  mutate(excl = recode_factor(excl, # coded based on access
                               "Control" = "All Excl",
                               "Ants" = "Rodents Excl",
                               "Rodents" = "Ants Excl",

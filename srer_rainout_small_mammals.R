@@ -12,6 +12,7 @@ library(ggpubr)
 library(gt)
 library(glue)
 library(ggpmisc)
+library(agricolae)
 
 # read in data
 rodents <- vroom("Data/Trapping_Combined_2017-2019.csv",
@@ -144,19 +145,22 @@ sm_surv <- rbind(a,b,c,d)
 glimpse(sm_surv)
 
 hist((sm_surv$rod_count))
-hist(log(sm_surv$rod_count)) #better
+hist(log(sm_surv$rod_count))
 
-summary(lm(mean_surv~(rod_count)+cohort, data = sm_surv))
-rod_mod <- lm(mean_surv~log(rod_count)+cohort, data = sm_surv) # log improves fit
+summary(glm(mean_surv~(rod_count)+cohort, data = sm_surv))
+
+rod_mod <- glm(mean_surv~log(rod_count)+cohort, data = sm_surv) # log improves fit, doesn't change relationships
+
 summary(rod_mod)
 
-plot(rod_mod)
 
 # insig outside of 1st year survival
-rod_mod_2 <- aov(mean_surv~log(rod_count)+year, data = sm_surv)
-summary(rod_mod_2)
+rod_mod_yearsurv <- glm(mean_surv~log(rod_count)+year+cohort, data = sm_surv)
 
-post_rod <- HSD.test(rod_mod_2, "year")
+summary(rod_mod_yearsurv )
+
+# no sig diff between year of survival
+post_rod <- HSD.test(rod_mod_yearsurv , "year")
 post_rod
 
 

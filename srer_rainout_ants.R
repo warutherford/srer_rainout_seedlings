@@ -12,6 +12,7 @@ library(glue)
 library(ggpubr)
 library(car)
 library(ggpmisc)
+library(agricolae)
 
 # read in data
 ants <- vroom("Data/ants_combined.csv",
@@ -235,11 +236,12 @@ summary(lm(mean_surv~(total_ants)+cohort, data = surv_ants)) #r2 = 0.24, fits dr
 summary(lm(mean_surv~log(total_ants)+cohort, data = surv_ants))# log improves fit, r2 = 0.24  
 
 # diagnostic plots
-ant_mod <- lm(mean_surv~log(total_ants)*cohort, data = surv_ants)
-plot(ant_mod)
+ant_mod <- lm(mean_surv~log(total_ants)+cohort, data = surv_ants)
+summary(ant_mod)
+
 
 # insig outside of 1st year survival
-ant_mod_2 <- aov(mean_surv~log(total_ants)+year, data = surv_ants)
+ant_mod_2 <- lm(mean_surv~log(total_ants)*year, data = surv_ants)
 summary(ant_mod_2)
 
 post_ant <- HSD.test(ant_mod_2, "year")

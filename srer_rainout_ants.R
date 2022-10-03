@@ -230,19 +230,23 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
        compression = "lzw")
 
 # stats
-# across all precip tx
-hist(surv_ants$total_ants) # looks normal
-summary(lm(mean_surv~(total_ants)+cohort, data = surv_ants)) #r2 = 0.24, fits drought poorly
-summary(lm(mean_surv~log(total_ants)+cohort, data = surv_ants))# log improves fit, r2 = 0.24  
 
-# diagnostic plots
-ant_mod <- lm(mean_surv~log(total_ants)+cohort, data = surv_ants)
+ant_mod_surv <- lm(mean_surv~log(total_ants)+year+cohort+precip, data = surv_ants)
+summary(ant_mod_surv)
+
+# across all precip tx
+surv_ants_1 <- surv_ants %>% filter(year == "1")
+
+hist(surv_ants_1$total_ants)
+
+summary(lm(mean_surv~(total_ants)+cohort+precip, data = surv_ants_1)) #r2 = 0.24, fits drought poorly
+
+summary(lm(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1))# log improves fit, r2 = 0.24  
+
+
+ant_mod <- lm(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1)
 summary(ant_mod)
 
 
-# insig outside of 1st year survival
-ant_mod_2 <- lm(mean_surv~log(total_ants)*year, data = surv_ants)
-summary(ant_mod_2)
-
-post_ant <- HSD.test(ant_mod_2, "year")
+post_ant <- HSD.test(ant_mod, "cohort")
 post_ant

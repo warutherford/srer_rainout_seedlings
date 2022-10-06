@@ -237,14 +237,20 @@ summary(ant_mod_surv)
 # across all precip tx
 surv_ants_1 <- surv_ants %>% filter(year == "1")
 
-hist(surv_ants_1$total_ants)
+hist(log10(surv_ants_1$total_ants))
 
-summary(lm(mean_surv~(total_ants)+cohort+precip, data = surv_ants_1)) #r2 = 0.24, fits drought poorly
+summary(lm((mean_surv)~log(total_ants)+precip, data = surv_ants_1)) #r2 = 0.24, fits drought poorly
 
-summary(lm(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1))# log improves fit, r2 = 0.24  
+srer.ants.full <- glmmTMB((mean_surv) ~ total_ants + (1|cohort),
+                             data = surv_ants_1,
+                             family = gaussian())
+
+summary(srer.ants.full)
+
+summary(aov(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1))# log improves fit, r2 = 0.24  
 
 
-ant_mod <- lm(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1)
+ant_mod <- aov(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1)
 summary(ant_mod)
 
 

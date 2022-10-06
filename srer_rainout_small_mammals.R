@@ -147,20 +147,23 @@ glimpse(sm_surv)
 hist((sm_surv$rod_count))
 hist(log(sm_surv$rod_count))
 
-summary(glm(mean_surv~(rod_count)+cohort, data = sm_surv))
+summary(lm(mean_surv~(rod_count)+cohort+precip, data = sm_surv))
 
-rod_mod <- glm(mean_surv~log(rod_count)+cohort, data = sm_surv) # log improves fit, doesn't change relationships
+rod_mod <- lm(mean_surv~log(rod_count)+cohort+precip, data =sm_surv) # log improves fit, doesn't change relationships
 
 summary(rod_mod)
 
+rod_mod_2 <- glm(mean_surv~log(rod_count), data = sm_surv)
+
+summary(rod_mod_2)
 
 # insig outside of 1st year survival
-rod_mod_yearsurv <- glm(mean_surv~log(rod_count)+year+cohort, data = sm_surv)
+rod_mod_yearsurv <- aov(mean_surv~log(rod_count)+year+cohort, data = sm_surv)
 
 summary(rod_mod_yearsurv )
 
-# no sig diff between year of survival
-post_rod <- HSD.test(rod_mod_yearsurv , "year")
+# no sig diff between all years of survival beside 2017
+post_rod <- HSD.test(rod_mod_yearsurv , "cohort")
 post_rod
 
 

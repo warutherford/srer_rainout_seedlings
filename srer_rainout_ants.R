@@ -230,28 +230,40 @@ ggsave(filename = "Figures_Tables/line_ants_surv.tiff",
        compression = "lzw")
 
 # stats
+# lin reg vs log
+# across all precip tx
+glimpse(surv_ants)
 
+hist((surv_ants$total_ants))
+hist(log(surv_ants$total_ants)) # better
+
+# look add all together
 ant_mod_surv <- lm(mean_surv~log(total_ants)+year+cohort+precip, data = surv_ants)
 summary(ant_mod_surv)
 
-# across all precip tx
+# across all precip tx, first year of survival only
 surv_ants_1 <- surv_ants %>% filter(year == "1")
 
-hist(log10(surv_ants_1$total_ants))
+# include cohort or not?
+hist(log(surv_ants_1$total_ants))
 
-summary(lm((mean_surv)~log(total_ants)+precip, data = surv_ants_1)) #r2 = 0.24, fits drought poorly
+ant_mod <- lm(mean_surv~log(total_ants)*cohort, data =surv_ants_1)
 
-srer.ants.full <- glmmTMB((mean_surv) ~ total_ants + (1|cohort),
-                             data = surv_ants_1,
-                             family = gaussian())
-
-summary(srer.ants.full)
-
-summary(aov(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1))# log improves fit, r2 = 0.24  
-
-
-ant_mod <- aov(mean_surv~log(total_ants)+cohort+precip, data = surv_ants_1)
 summary(ant_mod)
+
+ant_mod_noco <- lm(mean_surv~log(total_ants), data =surv_ants_1)
+
+summary(ant_mod_noco)
+
+anova(ant_mod, ant_mod_noco)
+
+#drought only
+surv_d <- surv_ants_1 %>% filter(precip == "Drought") 
+summary(lm(mean_surv~log(total_ants), data =surv_d))
+
+#ambient and wet
+surv_aw <- surv_ants_1 %>% filter(precip == "Ambient" | precip == "Wet") 
+summary(lm(mean_surv~log(total_ants), data =surv_aw))
 
 
 post_ant <- HSD.test(ant_mod, "cohort")

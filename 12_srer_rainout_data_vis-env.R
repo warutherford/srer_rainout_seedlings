@@ -727,14 +727,23 @@ ggsave(filename = "Figures_Tables/environment/surface_light_figs5.tiff",
 
 ### Soil Moisture 
 
-sm <- vroom("Data/site-env-data/soil-moisture/all_sm.csv",
+sm_1 <- vroom("Data/site-env-data/soil-moisture/all_sm_1.csv",
                     col_types = c(datetime = "T",
                                   precip = "f",
                                   clip = "f",
                                   moisture = "n",
                                   ids = "f"))
-str(sm)
 
+sm_2 <- vroom("Data/site-env-data/soil-moisture/all_sm_2.csv",
+              col_types = c(datetime = "T",
+                            precip = "f",
+                            clip = "f",
+                            moisture = "n",
+                            ids = "f"))
+
+sm <- bind_rows(sm_1, sm_2)
+
+str(sm)
 
 sm_clean <- sm %>% 
   dplyr::select(-ids) %>% 

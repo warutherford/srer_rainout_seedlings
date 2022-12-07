@@ -56,14 +56,27 @@ comb_data <- all_data %>%
                values_to = "moisture",
                values_drop_na = TRUE,
                -c(setID, datetime, ids)) %>% 
-  mutate(datetime = ymd_hms(datetime)) %>% 
+  mutate(datetime = parse_date_time(datetime, "%y-%m-%d %H:%M:%S")) %>% 
   separate("treatment", c("precip", "side"), sep = "_", remove = TRUE, fill = "warn") %>% 
   mutate(precip = as.factor(precip),
          clip = as.factor(side)) %>% 
   dplyr::select(datetime, precip, clip, moisture, ids)
 
+# split into two
+comb_data_1 <- comb_data %>% 
+  slice(1:1124168)
+
+comb_data_2 <- comb_data %>% 
+  slice(1124169:2248336)
 
 ## SAVE PROCESSED DATA ------
-# write data in one big file
-write.csv(comb_data, paste(out_dir, "all_sm.csv", sep="/"), 
+# write data in one big file for use later
+# write.csv(comb_data, paste(out_dir, "all_sm.csv", sep="/"), 
+#           row.names=FALSE)
+
+# write data in 2 files for upload
+write.csv(comb_data_1, paste(out_dir, "all_sm_1.csv", sep="/"), 
+          row.names=FALSE)
+
+write.csv(comb_data_2, paste(out_dir, "all_sm_2.csv", sep="/"), 
           row.names=FALSE)

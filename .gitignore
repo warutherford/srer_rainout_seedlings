@@ -3,7 +3,7 @@
 
 # Data folder, ignore everything in folder
 Data/*
-Data/site-env-data/*
+Data/site-env-data/soil-moisture/all_sm.csv
 
 # Figures_Tables, ignore everything in folder
 Figures_Tables/

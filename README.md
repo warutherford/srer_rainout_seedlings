@@ -18,7 +18,7 @@ environmental data that is largely in Appendix S1. Figure 1 code is in
 the "12_srer_rainout_data_vis-env.R" script as well as all the
 supplemental figures and associated environmental variable statistics*.
 
-## This work is currently under review:
+## This work is currently submitted to:
 
 Journal: ***Journal of Applied Ecology***
 

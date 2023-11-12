@@ -1,4 +1,4 @@
----
+ ---
 editor_options: 
   markdown: 
     wrap: 72
@@ -18,9 +18,9 @@ environmental data that is largely in Appendix S1. Figure 1 code is in
 the "12_srer_rainout_data_vis-env.R" script as well as all the
 supplemental figures and associated environmental variable statistics*.
 
-## This work is currently submitted to:
+## This work is in prep for Restoration Ecology:
 
-Journal: ***Journal of Applied Ecology***
+Journal: ***Restoration Ecology***
 
 Manuscript type: Research Article
 

@@ -48,6 +48,52 @@ tot_germ_p
 ## Figures ##
 ###
 
+# test alternate viz
+seedlings_obs_germ %>% 
+  group_by(precip, excl, clip, date, cohort) %>%
+  summarise(mean_germ = mean(100*(tot_germination)),
+            sum_germ = sum(tot_germination),
+            sd_germ = sd(100*(tot_germination)),
+            counts = n(),
+            se_germ = (sd_germ/sqrt(counts))) %>%
+  # mutate(upper = mean_germ + 10*se_germ,
+  #        lower = mean_germ - 10*se_germ) %>% 
+  mutate(precip = recode_factor(precip,
+                                "Control" = "Ambient",
+                                "IR" = "Wet",
+                                "RO" = "Drought", .ordered = TRUE)) %>% 
+  mutate(excl = recode_factor(excl, 
+                              "Control" = "All Excl",
+                              "Ants" = "Rodents Excl",
+                              "Rodents" = "Ants Excl",
+                              "Total" = "None")) %>% 
+  ggplot(mapping = aes(y = precip, x = mean_germ, fill = precip)) +
+  # geom_boxplot() +
+  geom_point(size = 3.5, alpha = 0.5, aes(color = clip), position = position_jitterdodge(jitter.width = NULL,
+                                                                                         jitter.height= 0.8,
+                                                                                         dodge.width = NULL))+
+  
+  ggridges::geom_density_ridges(show.legend = FALSE, alpha = 0.5, panel_scaling = FALSE,
+                                quantiles = c(0.5), quantile_lines = TRUE)+
+  coord_flip()+
+  #geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25, position = position_dodge(), size = 1) +
+  scale_fill_manual(values = c("grey30", "blue1", "#ba7525")) +
+  scale_color_manual(values = c("darkred", "gold")) +
+  scale_x_discrete(labels = c("Ambient", "Wet", "Drought")) +
+  scale_x_continuous(breaks = c(0, 100)) +
+  labs(x = "Seed Germination (%)",
+       y = "Precipitation Treatment") +
+  theme_pubr(legend = "none") +
+  facet_grid(cols = vars(excl)
+             # ,
+             # rows = vars(cohort)
+             ) +
+  labs_pubr(base_size = 24) +
+  theme(legend.position="none", 
+        panel.border = element_blank(), 
+        panel.spacing.x = unit(1,"line"))
+
+
 # create data set for precip and excl and cohort
 tot_germ_pce <- seedlings_obs_germ %>% 
   group_by(precip, clip, excl, cohort) %>% 

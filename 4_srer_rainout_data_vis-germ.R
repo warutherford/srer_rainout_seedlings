@@ -49,7 +49,7 @@ tot_germ_p
 ###
 
 # test alternate viz
-seedlings_obs_germ %>% 
+bar_pce_germ_fig <- seedlings_obs_germ %>% 
   group_by(precip, excl, clip, date, cohort) %>%
   summarise(mean_germ = mean(100*(tot_germination)),
             sum_germ = sum(tot_germination),
@@ -92,6 +92,16 @@ seedlings_obs_germ %>%
   theme(legend.position="none", 
         panel.border = element_blank(), 
         panel.spacing.x = unit(1,"line"))
+
+bar_pce_germ_fig
+
+ggsave(filename = "Figures_Tables/bar_peco_germ_fig2.tiff",
+       plot = bar_pce_germ_fig,
+       dpi = 800,
+       width = 22,
+       height = 12,
+       units = "in",
+       compression = "lzw")
 
 
 # create data set for precip and excl and cohort
